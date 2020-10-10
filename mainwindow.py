@@ -3,7 +3,10 @@ import os.path
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk  # noqa: E402 # need to call require_version before we can call this
+from gi.repository import Gdk  # noqa: E402 # need to call require_version before we can call this
 from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version before we can call this
+gi.require_version('Pango', '1.0')
+from gi.repository import Pango  # noqa: E402 # need to call require_version before we can call this
 
 import jsonrpc  # noqa: E402 # libraries before local imports
 
@@ -18,6 +21,16 @@ def load_local_image(icon_name, icon_size):
     leafname += '.png'
     icon_filename = os.path.join(os.path.dirname(__file__), leafname)
     return Gtk.Image.new_from_file(icon_filename)
+
+
+def set_font(label, weight, font_size, colour):
+    context = label.create_pango_context()
+    font_desc = context.get_font_description()
+    font_desc.set_family('sans')
+    font_desc.set_weight(weight)
+    font_desc.set_size(font_size * Pango.SCALE)
+    label.override_font(font_desc)
+    label.modify_fg(Gtk.StateType.NORMAL, colour)
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -46,6 +59,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.play_pause_button = Gtk.Button()
         self.play_pause_button.set_halign(Gtk.Align.END)
         self.play_pause_button.set_valign(Gtk.Align.CENTER)
+
+        set_font(self.track_name_label, Pango.Weight.BOLD, 40, Gdk.Color.from_floats(0.0, 0.0, 0.0))
+        set_font(self.artist_label, Pango.Weight.NORMAL, 24, Gdk.Color.from_floats(0.3, 0.3, 0.3))
 
         self.play_pause_button.connect('clicked', self.on_play_pause)
 
