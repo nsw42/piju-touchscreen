@@ -65,7 +65,7 @@ class MainWindow(Gtk.ApplicationWindow):
         overlay.add(layout_grid)
 
         if show_close_button:
-            close_icon = load_local_image('window-close-solid.png')
+            close_icon = load_local_image('window-close-solid.png', 0)
             close = Gtk.Button()
             close.set_image(close_icon)
             close.connect('clicked', self.on_quit)
