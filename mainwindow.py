@@ -72,6 +72,7 @@ class MainWindow(Gtk.ApplicationWindow):
             top_right = Gtk.Alignment.new(1, 0, 0, 0)
             top_right.add(close)
             overlay.add_overlay(top_right)
+            overlay.set_overlay_pass_through(top_right, True)
 
         self.add(overlay)
 
