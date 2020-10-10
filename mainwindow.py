@@ -57,9 +57,14 @@ class MainWindow(Gtk.ApplicationWindow):
             label.set_vexpand(True)
             label.set_line_wrap(True)
             label.set_justify(Gtk.Justification.LEFT)
+        self.prev_button = Gtk.Button()
+        self.prev_button.connect('clicked', self.on_previous)
         self.play_pause_button = Gtk.Button()
-        self.play_pause_button.set_halign(Gtk.Align.END)
-        self.play_pause_button.set_valign(Gtk.Align.CENTER)
+        self.next_button = Gtk.Button()
+        self.next_button.connect('clicked', self.on_next)
+        for button in (self.prev_button, self.play_pause_button, self.next_button):
+            button.set_halign(Gtk.Align.END)
+            button.set_valign(Gtk.Align.CENTER)
 
         set_font(self.track_name_label, Pango.Weight.BOLD, 32, Gdk.Color.from_floats(0.0, 0.0, 0.0))
         set_font(self.artist_label, Pango.Weight.NORMAL, 24, Gdk.Color.from_floats(0.3, 0.3, 0.3))
@@ -68,13 +73,16 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.play_pause_action = None
 
-        # image     track      play/pause
-        #  ..       artist
+        # image          track
+        #  ..            artist
+        #  prev  play/pause   next
         layout_grid = Gtk.Grid()
         layout_grid.attach(self.artwork, left=0, top=0, width=1, height=2)
-        layout_grid.attach(self.track_name_label, left=1, top=0, width=1, height=1)
-        layout_grid.attach(self.artist_label, left=1, top=1, width=1, height=1)
-        layout_grid.attach(self.play_pause_button, left=2, top=0, width=1, height=2)
+        layout_grid.attach(self.track_name_label, left=1, top=0, width=2, height=1)
+        layout_grid.attach(self.artist_label, left=1, top=1, width=2, height=1)
+        layout_grid.attach(self.prev_button, left=0, top=2, width=1, height=1)
+        layout_grid.attach(self.play_pause_button, left=1, top=2, width=1, height=1)
+        layout_grid.attach(self.next_button, left=2, top=2, width=1, height=1)
         layout_grid.set_column_spacing(4)
         layout_grid.set_margin_start(20)
         layout_grid.set_margin_end(20)
@@ -94,21 +102,32 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.add(overlay)
 
-        if hide_mouse_pointer:
-            self.connect('realize', self.on_realized)
+        self.hide_mouse_pointer = hide_mouse_pointer
+        self.connect('realize', self.on_realized)
+
+    def on_next(self, *args):
+        jsonrpc.jsonrpc('core.playback.next')
 
     def on_play_pause(self, *args):
         if self.play_pause_action:
             jsonrpc.jsonrpc(self.play_pause_action)
 
+    def on_previous(self, *args):
+        jsonrpc.jsonrpc('core.playback.previous')
+
     def on_quit(self, *args):
         Gtk.main_quit()
 
     def on_realized(self, *args):
-        self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
-
-    def get_icon_size(self):
-        return 200 if (self.get_allocated_width() > 1000) else 150
+        if self.hide_mouse_pointer:
+            self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
+        icon_size = 200 if (self.get_allocated_width() > 1000) else 100
+        self.pause_icon = load_local_image('pause-solid', icon_size)
+        self.play_icon = load_local_image('play-solid', icon_size)
+        prev_icon = load_local_image('backward-solid', icon_size)
+        self.prev_button.set_image(prev_icon)
+        next_icon = load_local_image('forward-solid', icon_size)
+        self.next_button.set_image(next_icon)
 
     def show_now_playing(self, now_playing):
         self.artist_label.set_label(now_playing.artist_name if now_playing.artist_name else '<Unknown artist>')
@@ -132,12 +151,8 @@ class MainWindow(Gtk.ApplicationWindow):
             self.artwork.hide()
 
         if now_playing.current_state == 'playing':
-            if not self.pause_icon:
-                self.pause_icon = load_local_image('pause-solid', self.get_icon_size())
             self.play_pause_button.set_image(self.pause_icon)
             self.play_pause_action = 'core.playback.pause'
         else:
-            if not self.play_icon:
-                self.play_icon = load_local_image('play-solid', self.get_icon_size())
             self.play_pause_button.set_image(self.play_icon)
             self.play_pause_action = 'core.playback.play'
