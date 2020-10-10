@@ -52,15 +52,16 @@ class MainWindow(Gtk.ApplicationWindow):
         self.artwork.set_size_request(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE)
         self.artist_label = Gtk.Label()
         self.track_name_label = Gtk.Label()
-        self.artist_label.set_hexpand(True)
-        self.artist_label.set_vexpand(True)
-        self.track_name_label.set_hexpand(True)
-        self.track_name_label.set_vexpand(True)
+        for label in (self.artist_label, self.track_name_label):
+            label.set_hexpand(True)
+            label.set_vexpand(True)
+            label.set_line_wrap(True)
+            label.set_justify(Gtk.Justification.LEFT)
         self.play_pause_button = Gtk.Button()
         self.play_pause_button.set_halign(Gtk.Align.END)
         self.play_pause_button.set_valign(Gtk.Align.CENTER)
 
-        set_font(self.track_name_label, Pango.Weight.BOLD, 40, Gdk.Color.from_floats(0.0, 0.0, 0.0))
+        set_font(self.track_name_label, Pango.Weight.BOLD, 32, Gdk.Color.from_floats(0.0, 0.0, 0.0))
         set_font(self.artist_label, Pango.Weight.NORMAL, 24, Gdk.Color.from_floats(0.3, 0.3, 0.3))
 
         self.play_pause_button.connect('clicked', self.on_play_pause)
@@ -74,6 +75,7 @@ class MainWindow(Gtk.ApplicationWindow):
         layout_grid.attach(self.track_name_label, left=1, top=0, width=1, height=1)
         layout_grid.attach(self.artist_label, left=1, top=1, width=1, height=1)
         layout_grid.attach(self.play_pause_button, left=2, top=0, width=1, height=2)
+        layout_grid.set_column_spacing(4)
         layout_grid.set_margin_start(20)
         layout_grid.set_margin_end(20)
 
