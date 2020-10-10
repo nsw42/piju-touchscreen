@@ -73,8 +73,8 @@ class MainWindow(Gtk.ApplicationWindow):
         Gtk.main_quit()
 
     def show_now_playing(self, now_playing):
-        self.artist_label.set_label(now_playing.artist_name)
-        self.track_name_label.set_label(now_playing.track_name)
+        self.artist_label.set_label(now_playing.artist_name if now_playing.artist_name else '<Unknown artist>')
+        self.track_name_label.set_label(now_playing.track_name if now_playing.track_name else '<Unknown track>')
         if now_playing.image:
             loader = GdkPixbuf.PixbufLoader()
             loader.write(now_playing.image)
