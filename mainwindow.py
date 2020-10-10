@@ -25,7 +25,28 @@ class MainWindow(Gtk.ApplicationWindow):
         close.connect('clicked', self.on_quit)
         top_right = Gtk.Alignment.new(1, 0, 0, 0)
         top_right.add(close)
-        self.add(top_right)
+        # top_right.halign = Gtk.Align.END
+        # close.valign = Gtk.Align.START
+
+        self.artist_label = Gtk.Label()
+
+        self.track_name_label = Gtk.Label()
+
+        layout_column = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        layout_column.pack_start(self.artist_label, expand=True, fill=True, padding=30)
+        layout_column.pack_start(self.track_name_label, expand=True, fill=True, padding=30)
+
+        overlay = Gtk.Overlay()
+        overlay.add(layout_column)
+        overlay.add_overlay(top_right)
+        
+        self.add(overlay)
         
     def on_quit(self, *args):
         Gtk.main_quit()
+
+    def show_artist(self, artist):
+        self.artist_label.set_label(artist)
+
+    def show_track_name(self, track_name):
+        self.track_name_label.set_label(track_name)

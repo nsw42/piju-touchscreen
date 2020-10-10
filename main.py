@@ -22,13 +22,18 @@ def get_current_track():
     current_track = jsonrpc("core.playback.get_current_track")
     current_volume = jsonrpc("core.mixer.get_volume")
     logging.debug('now_playing: %s, %s, %s', current_state, current_track, current_volume)
+
+def update_track_display(window):
+    now_playing = get_current_track()
+    window.show_artist("ARTIST")
+    window.show_track_name("TRACK NAME") # current_track)
     return True  # call again
-    
+
 def main():
     args = parse_args()
     window = MainWindow()
     window.show_all()
-    GLib.timeout_add_seconds(1, get_current_track)
+    GLib.timeout_add_seconds(1, update_track_display, window)
     Gtk.main()
 
 
