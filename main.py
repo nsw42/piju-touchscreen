@@ -114,4 +114,5 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
     main()
