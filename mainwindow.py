@@ -29,7 +29,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self.artwork = Gtk.Image()
         self.artist_label = Gtk.Label()
         self.track_name_label = Gtk.Label()
+        self.artist_label.set_hexpand(True)
+        self.track_name_label.set_hexpand(True)
         self.play_pause_button = Gtk.Button()
+        self.play_pause_button.set_halign(Gtk.Align.END)
+        self.play_pause_button.set_valign(Gtk.Align.CENTER)
 
         self.play_pause_button.connect('clicked', self.on_play_pause)
 
