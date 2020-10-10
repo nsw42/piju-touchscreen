@@ -48,6 +48,8 @@ class MainWindow(Gtk.ApplicationWindow):
         layout_grid.attach(self.track_name_label, left=1, top=0, width=1, height=1)
         layout_grid.attach(self.artist_label, left=1, top=1, width=1, height=1)
         layout_grid.attach(self.play_pause_button, left=2, top=0, width=1, height=2)
+        layout_grid.set_margin_start(20)
+        layout_grid.set_margin_end(20)
 
         overlay = Gtk.Overlay()
         overlay.add(layout_grid)
