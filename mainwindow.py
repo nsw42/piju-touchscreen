@@ -8,6 +8,9 @@ from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version
 import jsonrpc  # noqa: E402 # libraries before local imports
 
 
+MAX_IMAGE_SIZE = 300
+
+
 def load_local_image(icon_name, icon_size):
     leafname = icon_name
     if icon_size:
@@ -31,6 +34,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.pause_icon = None
 
         self.artwork = Gtk.Image()
+        self.artwork.set_hexpand(False)
+        self.artwork.set_vexpand(False)
+        self.artwork.set_size_request(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE)
         self.artist_label = Gtk.Label()
         self.track_name_label = Gtk.Label()
         self.artist_label.set_hexpand(True)
@@ -87,6 +93,14 @@ class MainWindow(Gtk.ApplicationWindow):
             loader.write(now_playing.image)
             pixbuf = loader.get_pixbuf()
             loader.close()
+            if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
+                if now_playing.image_width > now_playing.image_height:
+                    dest_width = MAX_IMAGE_SIZE
+                    dest_height = now_playing.image_height * dest_width / now_playing.image_width
+                else:
+                    dest_height = MAX_IMAGE_SIZE
+                    dest_width = now_playing.image_width * dest_height / now_playing.image_height
+                pixbuf = pixbuf.scale_simple(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE, GdkPixbuf.InterpType.BILINEAR)
             self.artwork.set_from_pixbuf(pixbuf)
             self.artwork.show()
         else:

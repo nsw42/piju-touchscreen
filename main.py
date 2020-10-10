@@ -91,7 +91,9 @@ def get_current_track():
                              current_track,
                              current_state,
                              current_volume,
-                             artwork_cache.current_image)
+                             artwork_cache.current_image,
+                             artwork_cache.current_image_width,
+                             artwork_cache.current_image_height)
     # logging.debug('now_playing: %s', now_playing)
     return now_playing
 
