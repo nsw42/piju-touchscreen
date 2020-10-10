@@ -38,7 +38,7 @@ class MainWindow(Gtk.ApplicationWindow):
     Main application window
     """
 
-    def __init__(self, show_close_button):
+    def __init__(self, show_close_button, hide_mouse_pointer):
         Gtk.Window.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
         self.fullscreen()
@@ -94,12 +94,18 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.add(overlay)
 
+        if hide_mouse_pointer:
+            self.connect('realize', self.on_realized)
+
     def on_play_pause(self, *args):
         if self.play_pause_action:
             jsonrpc.jsonrpc(self.play_pause_action)
 
     def on_quit(self, *args):
         Gtk.main_quit()
+
+    def on_realized(self, *args):
+        self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
 
     def get_icon_size(self):
         return 200 if (self.get_allocated_width() > 1000) else 150

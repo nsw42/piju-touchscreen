@@ -69,7 +69,12 @@ def parse_args():
                         help="Do not show a close button")
     parser.add_argument('--no-close-button', action='store_false', dest='show_close_button',
                         help="Do not show a close button")
-    parser.set_defaults(show_close_button=True)
+    parser.add_argument('--hide-mouse-pointer', action='store_true', dest='hide_mouse_pointer',
+                        help="Hide the mouse pointer over the window")
+    parser.add_argument('--no-hide-mouse-pointer', action='store_false', dest='hide_mouse_pointer',
+                        help="Do not hide the mouse pointer")
+    parser.set_defaults(show_close_button=True,
+                        hide_mouse_pointer=False)
     args = parser.parse_args()
     return args
 
@@ -106,7 +111,7 @@ def update_track_display(window):
 
 def main():
     args = parse_args()
-    window = MainWindow(args.show_close_button)
+    window = MainWindow(args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
     GLib.timeout_add_seconds(1, update_track_display, window)
     Gtk.main()
