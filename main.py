@@ -87,6 +87,9 @@ def get_current_track():
     current_artist = current_artist[0] if current_artist else None
     current_artist = current_artist['name'] if current_artist else None
     current_track = current_track_dict['name'] if current_track_dict else None
+    current_track_number = current_track_dict['track_no'] if current_track_dict else None
+    album_dict = current_track_dict['album'] if current_track_dict else None
+    album_num_tracks = album_dict['num_tracks'] if album_dict else None
     current_volume = jsonrpc.jsonrpc("core.mixer.get_volume")
     current_volume = int(current_volume) if current_volume else 50
 
@@ -94,6 +97,8 @@ def get_current_track():
 
     now_playing = NowPlaying(current_artist,
                              current_track,
+                             current_track_number,
+                             album_num_tracks,
                              current_state,
                              current_volume,
                              artwork_cache.current_image,
