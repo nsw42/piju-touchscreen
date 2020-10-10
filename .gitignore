@@ -1,0 +1,5 @@
+*/*.swp
+.python-version
+.vscode
+__pycache__
+pijuui.code-workspace
