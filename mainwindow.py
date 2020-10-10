@@ -8,7 +8,11 @@ from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version
 import jsonrpc  # noqa: E402 # libraries before local imports
 
 
-def load_local_image(leafname):
+def load_local_image(icon_name, icon_size):
+    leafname = icon_name
+    if icon_size:
+        leafname += '_%u' % icon_size
+    leafname += '.png'
     icon_filename = os.path.join(os.path.dirname(__file__), leafname)
     return Gtk.Image.new_from_file(icon_filename)
 
@@ -23,8 +27,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.connect("destroy", self.on_quit)
         self.fullscreen()
 
-        self.play_icon = load_local_image('play-solid.png')
-        self.pause_icon = load_local_image('pause-solid.png')
+        self.play_icon = None
+        self.pause_icon = None
 
         self.artwork = Gtk.Image()
         self.artist_label = Gtk.Label()
@@ -72,6 +76,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def on_quit(self, *args):
         Gtk.main_quit()
 
+    def get_icon_size(self):
+        return 200 if (self.get_allocated_width() > 1000) else 150
+
     def show_now_playing(self, now_playing):
         self.artist_label.set_label(now_playing.artist_name if now_playing.artist_name else '<Unknown artist>')
         self.track_name_label.set_label(now_playing.track_name if now_playing.track_name else '<Unknown track>')
@@ -84,9 +91,14 @@ class MainWindow(Gtk.ApplicationWindow):
             self.artwork.show()
         else:
             self.artwork.hide()
+
         if now_playing.current_state == 'playing':
+            if not self.pause_icon:
+                self.pause_icon = load_local_image('pause-solid', self.get_icon_size())
             self.play_pause_button.set_image(self.pause_icon)
             self.play_pause_action = 'core.playback.pause'
         else:
+            if not self.play_icon:
+                self.play_icon = load_local_image('play-solid', self.get_icon_size())
             self.play_pause_button.set_image(self.play_icon)
             self.play_pause_action = 'core.playback.play'
