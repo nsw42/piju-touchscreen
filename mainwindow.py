@@ -62,8 +62,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.play_pause_button = Gtk.Button()
         self.next_button = Gtk.Button()
         self.next_button.connect('clicked', self.on_next)
+        self.prev_button.set_halign(Gtk.Align.START)
+        self.play_pause_button.set_halign(Gtk.Align.CENTER)
+        self.next_button.set_halign(Gtk.Align.END)
         for button in (self.prev_button, self.play_pause_button, self.next_button):
-            button.set_halign(Gtk.Align.END)
             button.set_valign(Gtk.Align.CENTER)
 
         set_font(self.track_name_label, Pango.Weight.BOLD, 32, Gdk.Color.from_floats(0.0, 0.0, 0.0))
@@ -76,21 +78,31 @@ class MainWindow(Gtk.ApplicationWindow):
         # image          track
         #  ..            artist
         #  prev  play/pause   next
-        layout_grid = Gtk.Grid()
-        layout_grid.attach(self.artwork, left=0, top=0, width=1, height=2)
-        layout_grid.attach(self.track_name_label, left=1, top=0, width=2, height=1)
-        layout_grid.attach(self.artist_label, left=1, top=1, width=2, height=1)
-        layout_grid.attach(self.prev_button, left=0, top=2, width=1, height=1)
-        layout_grid.attach(self.play_pause_button, left=1, top=2, width=1, height=1)
-        layout_grid.attach(self.next_button, left=2, top=2, width=1, height=1)
-        layout_grid.set_column_spacing(4)
-        layout_grid.set_margin_start(20)
-        layout_grid.set_margin_end(20)
 
-        overlay = Gtk.Overlay()
-        overlay.add(layout_grid)
+        track_artist_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        track_artist_container.pack_start(self.track_name_label, expand=True, fill=True, padding=10)
+        track_artist_container.pack_start(self.artist_label, expand=True, fill=True, padding=10)
+        
+        top_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
+        top_row_container.pack_start(self.artwork, expand=False, fill=False, padding=10)
+        top_row_container.pack_start(track_artist_container, expand=True, fill=True, padding=10)
+        top_row_container.set_valign(Gtk.Align.START)
+        
+        bottom_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
+        bottom_row_container.pack_start(self.prev_button, expand=True, fill=False, padding=10)
+        bottom_row_container.pack_start(self.play_pause_button, expand=True, fill=False, padding=10)
+        bottom_row_container.pack_start(self.next_button, expand=True, fill=False, padding=10)
+        bottom_row_container.set_valign(Gtk.Align.END)
+        
+        child_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        child_container.pack_start(top_row_container, expand=True, fill=True, padding=10)
+        child_container.pack_start(bottom_row_container, expand=True, fill=False, padding=10)
 
         if show_close_button:
+
+            overlay = Gtk.Overlay()
+            overlay.add(child_container)
+
             close_icon = load_local_image('window-close-solid.png', 0)
             close = Gtk.Button()
             close.set_image(close_icon)
@@ -100,7 +112,8 @@ class MainWindow(Gtk.ApplicationWindow):
             overlay.add_overlay(top_right)
             overlay.set_overlay_pass_through(top_right, True)
 
-        self.add(overlay)
+        else:
+            self.add(child_container)
 
         self.hide_mouse_pointer = hide_mouse_pointer
         self.connect('realize', self.on_realized)
