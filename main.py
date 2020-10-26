@@ -108,7 +108,7 @@ def get_current_track():
     return now_playing
 
 
-def update_track_display(window):
+def update_track_display(window: MainWindow):
     now_playing = get_current_track()
     window.show_now_playing(now_playing)
     return True  # call again
