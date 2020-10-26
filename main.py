@@ -1,5 +1,6 @@
 import argparse
 import logging
+from urllib.parse import urlparse, urlunparse
 
 import requests
 
@@ -10,7 +11,7 @@ from gi.repository import Gtk  # noqa: E402 # need to call require_version befor
 gi.require_version('GLib', '2.0')
 from gi.repository import GLib  # noqa: E402 # need to call require_version before we can call this
 
-import jsonrpc  # noqa: E402  # local imports after libraries
+from jsonrpc import JsonRPC  # noqa: E402  # local imports after libraries
 from mainwindow import MainWindow  # noqa: E402  # local imports after libraries
 from nowplaying import NowPlaying  # noqa: E402  # local imports after libraries
 
@@ -23,17 +24,17 @@ class ArtworkCache:
         self.current_image_width = None
         self.current_image_height = None
 
-    def update(self, new_track_uri):
+    def update(self, jsonrpc, new_track_uri):
         if new_track_uri == self.current_track_uri:
             # nothing to do
             return
 
-        image_dict = jsonrpc.jsonrpc("core.library.get_images", {
+        image_dict = jsonrpc.request("core.library.get_images", {
             "uris": [new_track_uri]
         })
         image_list = image_dict[new_track_uri] if image_dict else None
         image_dict = image_list[0] if image_list else None
-        image_uri = jsonrpc.BASE_URI + image_dict['uri'] if image_dict else None
+        image_uri = jsonrpc.base_uri + image_dict['uri'] if image_dict else None
         image_width = image_dict['width'] if image_dict else None
         image_height = image_dict['height'] if image_dict else None
 
@@ -63,8 +64,26 @@ class ArtworkCache:
 artwork_cache = ArtworkCache()
 
 
+def construct_server_url(host):
+    # host is expected to be something like localhost, mopidy:6680
+    # but may include a scheme (http://) and even a base path, if
+    # that's required for a network proxy reason
+    parseresult = urlparse(host)
+    if not parseresult.scheme:
+        # absence of scheme results in misparsing:
+        # 'localhost:6680' is interpreted as path, instead of netloc
+        parseresult = urlparse('http://' + host)
+    if not parseresult.port:
+        parseresult = parseresult._replace(netloc=parseresult.netloc + ':6680')
+    parseresult = parseresult._replace(params='', query='', fragment='')
+    return urlunparse(parseresult)
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--host', action='store',
+                        help="IP address or hostname of mopidy server. "
+                             "Can include :portnumber if required. Port defaults to 6680.")
     parser.add_argument('--close-button', action='store_true', dest='show_close_button',
                         help="Do not show a close button")
     parser.add_argument('--no-close-button', action='store_false', dest='show_close_button',
@@ -73,15 +92,17 @@ def parse_args():
                         help="Hide the mouse pointer over the window")
     parser.add_argument('--no-hide-mouse-pointer', action='store_false', dest='hide_mouse_pointer',
                         help="Do not hide the mouse pointer")
-    parser.set_defaults(show_close_button=True,
+    parser.set_defaults(host='localhost',
+                        show_close_button=True,
                         hide_mouse_pointer=False)
     args = parser.parse_args()
+    args.host = construct_server_url(args.host)
     return args
 
 
-def get_current_track():
-    current_state = jsonrpc.jsonrpc("core.playback.get_state")  # 'playing', 'paused' or 'stopped'
-    current_track_dict = jsonrpc.jsonrpc("core.playback.get_current_track")
+def get_current_track(jsonrpc: JsonRPC):
+    current_state = jsonrpc.request("core.playback.get_state")  # 'playing', 'paused' or 'stopped'
+    current_track_dict = jsonrpc.request("core.playback.get_current_track")
     current_track_uri = current_track_dict['uri'] if current_track_dict else None
     current_artist = current_track_dict['artists'] if current_track_dict else None
     current_artist = current_artist[0] if current_artist else None
@@ -90,10 +111,10 @@ def get_current_track():
     current_track_number = current_track_dict['track_no'] if current_track_dict else None
     album_dict = current_track_dict['album'] if current_track_dict else None
     album_num_tracks = album_dict['num_tracks'] if album_dict else None
-    current_volume = jsonrpc.jsonrpc("core.mixer.get_volume")
+    current_volume = jsonrpc.request("core.mixer.get_volume")
     current_volume = int(current_volume) if current_volume else 50
 
-    artwork_cache.update(current_track_uri)
+    artwork_cache.update(jsonrpc, current_track_uri)
 
     now_playing = NowPlaying(current_artist,
                              current_track,
@@ -108,17 +129,18 @@ def get_current_track():
     return now_playing
 
 
-def update_track_display(window: MainWindow):
-    now_playing = get_current_track()
+def update_track_display(jsonrpc: JsonRPC, window: MainWindow):
+    now_playing = get_current_track(jsonrpc)
     window.show_now_playing(now_playing)
     return True  # call again
 
 
 def main():
     args = parse_args()
+    jsonrpc = JsonRPC(args.host)
     window = MainWindow(args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
-    GLib.timeout_add_seconds(1, update_track_display, window)
+    GLib.timeout_add_seconds(1, update_track_display, jsonrpc, window)
     Gtk.main()
 
 
