@@ -84,15 +84,22 @@ def parse_args():
     parser.add_argument('--host', action='store',
                         help="IP address or hostname of mopidy server. "
                              "Can include :portnumber if required. Port defaults to 6680.")
-    parser.add_argument('--close-button', action='store_true', dest='show_close_button',
-                        help="Do not show a close button")
-    parser.add_argument('--no-close-button', action='store_false', dest='show_close_button',
-                        help="Do not show a close button")
-    parser.add_argument('--hide-mouse-pointer', action='store_true', dest='hide_mouse_pointer',
-                        help="Hide the mouse pointer over the window")
-    parser.add_argument('--no-hide-mouse-pointer', action='store_false', dest='hide_mouse_pointer',
-                        help="Do not hide the mouse pointer")
+    mainwindowgroup = parser.add_argument_group('Main Window options',
+                                                description='Options related to the behaviour of the main window')
+    mainwindowgroup.add_argument('--full-screen', action='store_true', dest='full_screen',
+                                 help="Go full-screen (default)")
+    mainwindowgroup.add_argument('--no-full-screen', action='store_false', dest='full_screen',
+                                 help="Do not go full-screen")
+    mainwindowgroup.add_argument('--close-button', action='store_true', dest='show_close_button',
+                                 help="Show a close button (default)")
+    mainwindowgroup.add_argument('--no-close-button', action='store_false', dest='show_close_button',
+                                 help="Do not show a close button")
+    mainwindowgroup.add_argument('--hide-mouse-pointer', action='store_true', dest='hide_mouse_pointer',
+                                 help="Hide the mouse pointer over the window")
+    mainwindowgroup.add_argument('--no-hide-mouse-pointer', action='store_false', dest='hide_mouse_pointer',
+                                 help="Do not hide the mouse pointer (default)")
     parser.set_defaults(host='localhost',
+                        full_screen=True,
                         show_close_button=True,
                         hide_mouse_pointer=False)
     args = parser.parse_args()
@@ -138,7 +145,7 @@ def update_track_display(jsonrpc: JsonRPC, window: MainWindow):
 def main():
     args = parse_args()
     jsonrpc = JsonRPC(args.host)
-    window = MainWindow(args.show_close_button, args.hide_mouse_pointer)
+    window = MainWindow(args.full_screen, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
     GLib.timeout_add_seconds(1, update_track_display, jsonrpc, window)
     Gtk.main()

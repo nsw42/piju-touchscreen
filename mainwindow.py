@@ -39,10 +39,13 @@ class MainWindow(Gtk.ApplicationWindow):
     Main application window
     """
 
-    def __init__(self, show_close_button, hide_mouse_pointer):
+    def __init__(self, full_screen, show_close_button, hide_mouse_pointer):
         Gtk.Window.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
-        self.fullscreen()
+        if full_screen:
+            self.fullscreen()
+        else:
+            self.set_size_request(800, 480)
 
         self.play_icon = None
         self.pause_icon = None
