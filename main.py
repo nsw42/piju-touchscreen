@@ -80,7 +80,7 @@ def parse_args():
 
 
 def get_current_track():
-    current_state = jsonrpc.jsonrpc("core.playback.get_state")  # 'playing' or 'paused'
+    current_state = jsonrpc.jsonrpc("core.playback.get_state")  # 'playing', 'paused' or 'stopped'
     current_track_dict = jsonrpc.jsonrpc("core.playback.get_current_track")
     current_track_uri = current_track_dict['uri'] if current_track_dict else None
     current_artist = current_track_dict['artists'] if current_track_dict else None
