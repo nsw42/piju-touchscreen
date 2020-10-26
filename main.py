@@ -32,7 +32,7 @@ class ArtworkCache:
             "uris": [new_track_uri]
         })
         image_list = image_dict[new_track_uri] if image_dict else None
-        image_dict = image_list[0] if image_dict else None
+        image_dict = image_list[0] if image_list else None
         image_uri = jsonrpc.BASE_URI + image_dict['uri'] if image_dict else None
         image_width = image_dict['width'] if image_dict else None
         image_height = image_dict['height'] if image_dict else None
