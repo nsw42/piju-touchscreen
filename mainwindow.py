@@ -20,6 +20,7 @@ def load_local_image(icon_name, icon_size):
         leafname += '_%u' % icon_size
     leafname += '.png'
     icon_filename = os.path.join(os.path.dirname(__file__), leafname)
+    assert os.path.exists(icon_filename)
     return Gtk.Image.new_from_file(icon_filename)
 
 
@@ -82,18 +83,18 @@ class MainWindow(Gtk.ApplicationWindow):
         track_artist_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
         track_artist_container.pack_start(self.track_name_label, expand=True, fill=True, padding=10)
         track_artist_container.pack_start(self.artist_label, expand=True, fill=True, padding=10)
-        
+
         top_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
         top_row_container.pack_start(self.artwork, expand=False, fill=False, padding=10)
         top_row_container.pack_start(track_artist_container, expand=True, fill=True, padding=10)
         top_row_container.set_valign(Gtk.Align.START)
-        
+
         bottom_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
         bottom_row_container.pack_start(self.prev_button, expand=True, fill=False, padding=10)
         bottom_row_container.pack_start(self.play_pause_button, expand=True, fill=False, padding=10)
         bottom_row_container.pack_start(self.next_button, expand=True, fill=False, padding=10)
         bottom_row_container.set_valign(Gtk.Align.END)
-        
+
         child_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
         child_container.pack_start(top_row_container, expand=True, fill=True, padding=10)
         child_container.pack_start(bottom_row_container, expand=True, fill=False, padding=10)
@@ -103,7 +104,7 @@ class MainWindow(Gtk.ApplicationWindow):
             overlay = Gtk.Overlay()
             overlay.add(child_container)
 
-            close_icon = load_local_image('window-close-solid.png', 0)
+            close_icon = load_local_image('window-close-solid', 0)
             close = Gtk.Button()
             close.set_image(close_icon)
             close.connect('clicked', self.on_quit)
@@ -111,6 +112,8 @@ class MainWindow(Gtk.ApplicationWindow):
             top_right.add(close)
             overlay.add_overlay(top_right)
             overlay.set_overlay_pass_through(top_right, True)
+
+            self.add(overlay)
 
         else:
             self.add(child_container)
