@@ -145,7 +145,7 @@ def update_track_display(jsonrpc: JsonRPC, window: MainWindow):
 def main():
     args = parse_args()
     jsonrpc = JsonRPC(args.host)
-    window = MainWindow(args.full_screen, args.show_close_button, args.hide_mouse_pointer)
+    window = MainWindow(jsonrpc, args.full_screen, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
     GLib.timeout_add_seconds(1, update_track_display, jsonrpc, window)
     Gtk.main()

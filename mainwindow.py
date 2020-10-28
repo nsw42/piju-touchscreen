@@ -8,7 +8,7 @@ from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version
 gi.require_version('Pango', '1.0')
 from gi.repository import Pango  # noqa: E402 # need to call require_version before we can call this
 
-import jsonrpc  # noqa: E402 # libraries before local imports
+from jsonrpc import JsonRPC  # noqa: E402 # libraries before local imports
 
 
 MAX_IMAGE_SIZE = 300
@@ -39,9 +39,10 @@ class MainWindow(Gtk.ApplicationWindow):
     Main application window
     """
 
-    def __init__(self, full_screen, show_close_button, hide_mouse_pointer):
+    def __init__(self, jsonrpc: JsonRPC, full_screen, show_close_button, hide_mouse_pointer):
         Gtk.Window.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
+        self.jsonrpc = jsonrpc
         if full_screen:
             self.fullscreen()
         else:
@@ -125,14 +126,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.connect('realize', self.on_realized)
 
     def on_next(self, *args):
-        jsonrpc.jsonrpc('core.playback.next')
+        self.jsonrpc.request('core.playback.next')
 
     def on_play_pause(self, *args):
         if self.play_pause_action:
-            jsonrpc.jsonrpc(self.play_pause_action)
+            self.jsonrpc.request(self.play_pause_action)
 
     def on_previous(self, *args):
-        jsonrpc.jsonrpc('core.playback.previous')
+        self.jsonrpc.request('core.playback.previous')
 
     def on_quit(self, *args):
         Gtk.main_quit()
