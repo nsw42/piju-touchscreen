@@ -1,4 +1,4 @@
-*/*.swp
+**.swp
 .python-version
 .vscode
 __pycache__
