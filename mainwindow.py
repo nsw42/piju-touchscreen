@@ -164,7 +164,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 else:
                     dest_height = MAX_IMAGE_SIZE
                     dest_width = now_playing.image_width * dest_height / now_playing.image_height
-                pixbuf = pixbuf.scale_simple(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE, GdkPixbuf.InterpType.BILINEAR)
+                pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
             self.artwork.set_from_pixbuf(pixbuf)
             self.artwork.show()
         else:
