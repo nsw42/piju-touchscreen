@@ -124,6 +124,7 @@ def get_current_track(jsonrpc: JsonRPC):
     artwork_cache.update(jsonrpc, current_track_uri)
 
     now_playing = NowPlaying(current_artist,
+                             current_track_dict is not None,
                              current_track,
                              current_track_number,
                              album_num_tracks,
@@ -138,7 +139,7 @@ def get_current_track(jsonrpc: JsonRPC):
 
 def update_track_display(jsonrpc: JsonRPC, window: MainWindow):
     now_playing = get_current_track(jsonrpc)
-    window.show_now_playing(now_playing)
+    window.show_now_playing(jsonrpc.connection_error, now_playing)
     return True  # call again
 
 

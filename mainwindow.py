@@ -149,39 +149,52 @@ class MainWindow(Gtk.ApplicationWindow):
         next_icon = load_local_image('forward-solid', icon_size)
         self.next_button.set_image(next_icon)
 
-    def show_now_playing(self, now_playing):
-        self.artist_label.set_label(now_playing.artist_name if now_playing.artist_name else '<Unknown artist>')
-        self.track_name_label.set_label(now_playing.track_name if now_playing.track_name else '<Unknown track>')
-        if now_playing.image:
-            loader = GdkPixbuf.PixbufLoader()
-            loader.write(now_playing.image)
-            pixbuf = loader.get_pixbuf()
-            loader.close()
-            if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
-                if now_playing.image_width > now_playing.image_height:
-                    dest_width = MAX_IMAGE_SIZE
-                    dest_height = now_playing.image_height * dest_width / now_playing.image_width
-                else:
-                    dest_height = MAX_IMAGE_SIZE
-                    dest_width = now_playing.image_width * dest_height / now_playing.image_height
-                pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
-            self.artwork.set_from_pixbuf(pixbuf)
-            self.artwork.show()
-        else:
+    def show_now_playing(self, connection_error, now_playing):
+        if connection_error:
+            self.artist_label.set_label("Connection error")
+            self.track_name_label.set_label("")
             self.artwork.hide()
-
-        if now_playing.current_state == 'playing':
-            self.play_pause_button.set_image(self.pause_icon)
-            self.play_pause_action = 'core.playback.pause'
-        else:
             self.play_pause_button.set_image(self.play_icon)
-            self.play_pause_action = 'core.playback.play'
-
-        if now_playing.track_number:
-            self.prev_button.set_sensitive(now_playing.track_number > 1)
-            self.play_pause_button.set_sensitive(True)
-            self.next_button.set_sensitive(now_playing.track_number < now_playing.album_tracks)
-        else:
             self.prev_button.set_sensitive(False)
             self.play_pause_button.set_sensitive(False)
             self.next_button.set_sensitive(False)
+        else:
+            if now_playing.is_track:
+                self.artist_label.set_label('Unknown artist' if now_playing.artist_name is None else now_playing.artist_name)
+                self.track_name_label.set_label('Unknown track' if now_playing.track_name is None else now_playing.track_name)
+            else:
+                self.artist_label.set_label('No track')
+                self.track_name_label.set_label('')
+            if now_playing.image:
+                loader = GdkPixbuf.PixbufLoader()
+                loader.write(now_playing.image)
+                pixbuf = loader.get_pixbuf()
+                loader.close()
+                if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
+                    if now_playing.image_width > now_playing.image_height:
+                        dest_width = MAX_IMAGE_SIZE
+                        dest_height = now_playing.image_height * dest_width / now_playing.image_width
+                    else:
+                        dest_height = MAX_IMAGE_SIZE
+                        dest_width = now_playing.image_width * dest_height / now_playing.image_height
+                    pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
+                self.artwork.set_from_pixbuf(pixbuf)
+                self.artwork.show()
+            else:
+                self.artwork.hide()
+
+            if now_playing.current_state == 'playing':
+                self.play_pause_button.set_image(self.pause_icon)
+                self.play_pause_action = 'core.playback.pause'
+            else:
+                self.play_pause_button.set_image(self.play_icon)
+                self.play_pause_action = 'core.playback.play'
+
+            if now_playing.track_number:
+                self.prev_button.set_sensitive(now_playing.track_number > 1)
+                self.play_pause_button.set_sensitive(True)
+                self.next_button.set_sensitive(now_playing.track_number < now_playing.album_tracks)
+            else:
+                self.prev_button.set_sensitive(False)
+                self.play_pause_button.set_sensitive(False)
+                self.next_button.set_sensitive(False)
