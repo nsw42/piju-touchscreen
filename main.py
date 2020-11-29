@@ -156,7 +156,10 @@ def main():
     window = MainWindow(jsonrpc, args.full_screen, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
     screenblankmgr = ScreenBlankMgr() if args.manage_screenblanker else None
-    GLib.timeout_add_seconds(1, update_track_display, jsonrpc, window, screenblankmgr)
+    GLib.timeout_add_seconds(1,
+                             update_track_display,
+                             jsonrpc, window, screenblankmgr,
+                             priority=GLib.PRIORITY_DEFAULT_IDLE)
     Gtk.main()
 
 
