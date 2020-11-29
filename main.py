@@ -47,6 +47,7 @@ class ArtworkCache:
             response = requests.get(image_uri, allow_redirects=True)
             ok = response.ok
         else:
+            response = None
             ok = False
 
         if ok:
