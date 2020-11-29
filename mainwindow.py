@@ -160,11 +160,12 @@ class MainWindow(Gtk.ApplicationWindow):
             self.next_button.set_sensitive(False)
         else:
             if now_playing.is_track:
-                self.artist_label.set_label('Unknown artist' if now_playing.artist_name is None else now_playing.artist_name)
-                self.track_name_label.set_label('Unknown track' if now_playing.track_name is None else now_playing.track_name)
+                self.artist_label.set_label(now_playing.artist_name or 'Unknown artist')
+                self.track_name_label.set_label(now_playing.track_name or 'Unknown track')
             else:
                 self.artist_label.set_label('No track')
                 self.track_name_label.set_label('')
+
             if now_playing.image:
                 loader = GdkPixbuf.PixbufLoader()
                 loader.write(now_playing.image)

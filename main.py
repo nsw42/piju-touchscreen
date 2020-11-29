@@ -11,6 +11,7 @@ from gi.repository import Gtk  # noqa: E402 # need to call require_version befor
 gi.require_version('GLib', '2.0')
 from gi.repository import GLib  # noqa: E402 # need to call require_version before we can call this
 
+from screenblankmgr import ScreenBlankMgr  # noqa: E402  # local imports after libraries
 from jsonrpc import JsonRPC  # noqa: E402  # local imports after libraries
 from mainwindow import MainWindow  # noqa: E402  # local imports after libraries
 from nowplaying import NowPlaying  # noqa: E402  # local imports after libraries
@@ -99,10 +100,13 @@ def parse_args():
                                  help="Hide the mouse pointer over the window")
     mainwindowgroup.add_argument('--no-hide-mouse-pointer', action='store_false', dest='hide_mouse_pointer',
                                  help="Do not hide the mouse pointer (default)")
+    parser.add_argument('--manage-screenblanker', action='store_true',
+                        help="Actively manage the screen blank time based on playback state")
     parser.set_defaults(host='localhost',
                         full_screen=True,
                         show_close_button=True,
-                        hide_mouse_pointer=False)
+                        hide_mouse_pointer=False,
+                        manage_screenblanker=False)
     args = parser.parse_args()
     args.host = construct_server_url(args.host)
     return args
@@ -138,9 +142,11 @@ def get_current_track(jsonrpc: JsonRPC):
     return now_playing
 
 
-def update_track_display(jsonrpc: JsonRPC, window: MainWindow):
+def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenblankmgr: ScreenBlankMgr):
     now_playing = get_current_track(jsonrpc)
     window.show_now_playing(jsonrpc.connection_error, now_playing)
+    if screenblankmgr:
+        screenblankmgr.set_state(now_playing.current_state)
     return True  # call again
 
 
@@ -149,7 +155,11 @@ def main():
     jsonrpc = JsonRPC(args.host)
     window = MainWindow(jsonrpc, args.full_screen, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
-    GLib.timeout_add_seconds(1, update_track_display, jsonrpc, window)
+    screenblankmgr = ScreenBlankMgr() if args.manage_screenblanker else None
+    GLib.timeout_add_seconds(1,
+                             update_track_display,
+                             jsonrpc, window, screenblankmgr,
+                             priority=GLib.PRIORITY_DEFAULT_IDLE)
     Gtk.main()
 
 
