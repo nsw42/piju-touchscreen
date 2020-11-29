@@ -17,5 +17,6 @@ class ScreenBlankMgr:
         new_state = PlayingState.Active if (new_state == 'playing') else PlayingState.Inactive
         if self.state == new_state:
             return
+        self.state = new_state
         timeout = 300 if (new_state == PlayingState.Active) else 30
         subprocess.run(['xset', 's', timeout])
