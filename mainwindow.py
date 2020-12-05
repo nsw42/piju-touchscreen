@@ -194,7 +194,8 @@ class MainWindow(Gtk.ApplicationWindow):
             if now_playing.track_number:
                 self.prev_button.set_sensitive(now_playing.track_number > 1)
                 self.play_pause_button.set_sensitive(True)
-                self.next_button.set_sensitive((now_playing.album_tracks is not None) and (now_playing.track_number < now_playing.album_tracks))
+                self.next_button.set_sensitive((now_playing.album_tracks is not None)
+                                               and (now_playing.track_number < now_playing.album_tracks))
             else:
                 self.prev_button.set_sensitive(False)
                 self.play_pause_button.set_sensitive(False)
