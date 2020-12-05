@@ -122,7 +122,7 @@ def get_current_track(jsonrpc: JsonRPC):
     current_track = current_track_dict['name'] if current_track_dict else None
     current_track_number = current_track_dict['track_no'] if current_track_dict else None
     album_dict = current_track_dict['album'] if current_track_dict else None
-    album_num_tracks = album_dict['num_tracks'] if album_dict else None
+    album_num_tracks = album_dict.get('num_tracks') if album_dict else None
     current_volume = jsonrpc.request("core.mixer.get_volume")
     current_volume = int(current_volume) if current_volume else 50
 
