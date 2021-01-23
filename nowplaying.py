@@ -8,6 +8,7 @@ NowPlaying = namedtuple('NowPlaying', ['artist_name',
                                        'album_tracks',
                                        'current_state',
                                        'current_volume',
+                                       'image_uri',
                                        'image',
                                        'image_width',
                                        'image_height'])

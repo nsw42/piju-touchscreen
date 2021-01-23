@@ -45,6 +45,7 @@ class ArtworkCache:
 
         # if we get here, we need to update our cache
         if image_uri:
+            logging.debug("Fetching new artwork: %s", image_uri)
             response = requests.get(image_uri, allow_redirects=True)
             ok = response.ok
         else:
@@ -140,6 +141,7 @@ def get_current_track(jsonrpc: JsonRPC):
                              album_num_tracks,
                              current_state,
                              current_volume,
+                             artwork_cache.current_image_uri,
                              artwork_cache.current_image,
                              artwork_cache.current_image_width,
                              artwork_cache.current_image_height)

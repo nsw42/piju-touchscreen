@@ -60,6 +60,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.play_icon = None
         self.pause_icon = None
 
+        self.current_image_uri = None
+
         self.artwork = Gtk.Image()
         self.artwork.set_hexpand(False)
         self.artwork.set_vexpand(False)
@@ -201,23 +203,26 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.artist_label.set_label('No track')
                 self.track_name_label.set_label('')
 
-            if now_playing.image:
-                loader = GdkPixbuf.PixbufLoader()
-                loader.write(now_playing.image)
-                pixbuf = loader.get_pixbuf()
-                loader.close()
-                if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
-                    if now_playing.image_width > now_playing.image_height:
-                        dest_width = MAX_IMAGE_SIZE
-                        dest_height = now_playing.image_height * dest_width / now_playing.image_width
-                    else:
-                        dest_height = MAX_IMAGE_SIZE
-                        dest_width = now_playing.image_width * dest_height / now_playing.image_height
-                    pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
-                self.artwork.set_from_pixbuf(pixbuf)
-                self.artwork.show()
-            else:
-                self.artwork.hide()
+            if now_playing.image_uri != self.current_image_uri:
+                logging.debug("Updating image display")
+                if now_playing.image:
+                    loader = GdkPixbuf.PixbufLoader()
+                    loader.write(now_playing.image)
+                    pixbuf = loader.get_pixbuf()
+                    loader.close()
+                    if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
+                        if now_playing.image_width > now_playing.image_height:
+                            dest_width = MAX_IMAGE_SIZE
+                            dest_height = now_playing.image_height * dest_width / now_playing.image_width
+                        else:
+                            dest_height = MAX_IMAGE_SIZE
+                            dest_width = now_playing.image_width * dest_height / now_playing.image_height
+                        pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
+                    self.artwork.set_from_pixbuf(pixbuf)
+                    self.artwork.show()
+                else:
+                    self.artwork.hide()
+                self.current_image_uri = now_playing.image_uri
 
             if now_playing.current_state == 'playing':
                 self.play_pause_button.set_image(self.pause_icon)
