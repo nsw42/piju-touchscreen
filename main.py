@@ -92,6 +92,10 @@ def parse_args():
                                  help="Go full-screen (default)")
     mainwindowgroup.add_argument('--no-full-screen', action='store_false', dest='full_screen',
                                  help="Do not go full-screen")
+    mainwindowgroup.add_argument('--fixed-layout', action='store_true', dest='fixed_layout',
+                                 help="Use a fixed layout to position controls")
+    mainwindowgroup.add_argument('--no-fixed-layout', action='store_false', dest='fixed_layout',
+                                 help="Use a dynamically resized layout for controls")
     mainwindowgroup.add_argument('--close-button', action='store_true', dest='show_close_button',
                                  help="Show a close button (default)")
     mainwindowgroup.add_argument('--no-close-button', action='store_false', dest='show_close_button',
@@ -104,6 +108,7 @@ def parse_args():
                         help="Actively manage the screen blank time based on playback state")
     parser.set_defaults(host='localhost',
                         full_screen=True,
+                        fixed_layout=True,
                         show_close_button=True,
                         hide_mouse_pointer=False,
                         manage_screenblanker=False)
@@ -153,7 +158,7 @@ def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenblankmgr: S
 def main():
     args = parse_args()
     jsonrpc = JsonRPC(args.host)
-    window = MainWindow(jsonrpc, args.full_screen, args.show_close_button, args.hide_mouse_pointer)
+    window = MainWindow(jsonrpc, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
     screenblankmgr = ScreenBlankMgr() if args.manage_screenblanker else None
     GLib.timeout_add_seconds(1,
