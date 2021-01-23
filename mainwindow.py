@@ -1,3 +1,4 @@
+import logging
 import os.path
 
 import gi
@@ -10,6 +11,9 @@ from gi.repository import Pango  # noqa: E402 # need to call require_version bef
 
 from jsonrpc import JsonRPC  # noqa: E402 # libraries before local imports
 
+
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 480
 
 MAX_IMAGE_SIZE = 300
 
@@ -39,14 +43,19 @@ class MainWindow(Gtk.ApplicationWindow):
     Main application window
     """
 
-    def __init__(self, jsonrpc: JsonRPC, full_screen, show_close_button, hide_mouse_pointer):
+    def __init__(self,
+                 jsonrpc: JsonRPC,
+                 full_screen: bool,
+                 fixed_layout: bool,
+                 show_close_button: bool,
+                 hide_mouse_pointer: bool):
         Gtk.Window.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
         self.jsonrpc = jsonrpc
         if full_screen:
             self.fullscreen()
         else:
-            self.set_size_request(800, 480)
+            self.set_size_request(SCREEN_WIDTH, SCREEN_HEIGHT)
 
         self.play_icon = None
         self.pause_icon = None
@@ -80,47 +89,71 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.play_pause_action = None
 
+        close_icon = load_local_image('window-close-solid', 0)
+        close = Gtk.Button()
+        close.set_image(close_icon)
+        close.connect('clicked', self.on_quit)
+
         # image          track
         #  ..            artist
         #  prev  play/pause   next
 
-        track_artist_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-        track_artist_container.pack_start(self.track_name_label, expand=True, fill=True, padding=10)
-        track_artist_container.pack_start(self.artist_label, expand=True, fill=True, padding=10)
-
-        top_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
-        top_row_container.pack_start(self.artwork, expand=False, fill=False, padding=10)
-        top_row_container.pack_start(track_artist_container, expand=True, fill=True, padding=10)
-        top_row_container.set_valign(Gtk.Align.START)
-
-        bottom_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
-        bottom_row_container.pack_start(self.prev_button, expand=True, fill=False, padding=10)
-        bottom_row_container.pack_start(self.play_pause_button, expand=True, fill=False, padding=10)
-        bottom_row_container.pack_start(self.next_button, expand=True, fill=False, padding=10)
-        bottom_row_container.set_valign(Gtk.Align.END)
-
-        child_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-        child_container.pack_start(top_row_container, expand=True, fill=True, padding=10)
-        child_container.pack_start(bottom_row_container, expand=True, fill=False, padding=10)
-
-        if show_close_button:
-
-            overlay = Gtk.Overlay()
-            overlay.add(child_container)
-
-            close_icon = load_local_image('window-close-solid', 0)
-            close = Gtk.Button()
-            close.set_image(close_icon)
-            close.connect('clicked', self.on_quit)
-            top_right = Gtk.Alignment.new(1, 0, 0, 0)
-            top_right.add(close)
-            overlay.add_overlay(top_right)
-            overlay.set_overlay_pass_through(top_right, True)
-
-            self.add(overlay)
-
+        if fixed_layout:
+            fixed_container = Gtk.Fixed.new()
+            x_padding = 10
+            y0_padding = 10
+            label_h = MAX_IMAGE_SIZE / 2
+            fixed_container.put(self.artwork, x_padding, y0_padding)
+            track_artist_x0 = x_padding + MAX_IMAGE_SIZE + x_padding
+            fixed_container.put(self.track_name_label, track_artist_x0, y0_padding)
+            artist_y0 = y0_padding + label_h + y0_padding
+            fixed_container.put(self.artist_label, track_artist_x0, artist_y0)
+            for label in (self.track_name_label, self.artist_label):
+                label.set_size_request(SCREEN_WIDTH - track_artist_x0 - x_padding,
+                                       label_h)
+            # buttons
+            # image is 100x100; button padding takes it to 112x110
+            # (on macOS, at least)
+            img_button_w = 112
+            img_button_h = 110
+            y1_padding = 20
+            button_y0 = SCREEN_HEIGHT - y1_padding - img_button_h
+            fixed_container.put(self.prev_button, x_padding, button_y0)
+            fixed_container.put(self.play_pause_button, (SCREEN_WIDTH - img_button_w) / 2, button_y0)
+            fixed_container.put(self.next_button, SCREEN_WIDTH - x_padding - img_button_w, button_y0)
+            self.add(fixed_container)
         else:
-            self.add(child_container)
+            track_artist_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+            track_artist_container.pack_start(self.track_name_label, expand=True, fill=True, padding=10)
+            track_artist_container.pack_start(self.artist_label, expand=True, fill=True, padding=10)
+
+            top_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
+            top_row_container.pack_start(self.artwork, expand=False, fill=False, padding=10)
+            top_row_container.pack_start(track_artist_container, expand=True, fill=True, padding=10)
+            top_row_container.set_valign(Gtk.Align.START)
+
+            bottom_row_container = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
+            bottom_row_container.pack_start(self.prev_button, expand=True, fill=False, padding=10)
+            bottom_row_container.pack_start(self.play_pause_button, expand=True, fill=False, padding=10)
+            bottom_row_container.pack_start(self.next_button, expand=True, fill=False, padding=10)
+            bottom_row_container.set_valign(Gtk.Align.START)
+
+            child_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+            child_container.pack_start(top_row_container, expand=True, fill=True, padding=10)
+            child_container.pack_end(bottom_row_container, expand=True, fill=False, padding=10)
+
+            if show_close_button:
+                overlay = Gtk.Overlay()
+                overlay.add(child_container)
+
+                top_right = Gtk.Alignment.new(1, 0, 0, 0)
+                top_right.add(close)
+                overlay.add_overlay(top_right)
+                overlay.set_overlay_pass_through(top_right, True)
+
+                self.add(overlay)
+            else:
+                self.add(child_container)
 
         self.hide_mouse_pointer = hide_mouse_pointer
         self.connect('realize', self.on_realized)
@@ -141,6 +174,8 @@ class MainWindow(Gtk.ApplicationWindow):
     def on_realized(self, *args):
         if self.hide_mouse_pointer:
             self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
+        logging.debug("Main window realized: allocated size %ux%u",
+                      self.get_allocated_width(), self.get_allocated_height())
         icon_size = 200 if (self.get_allocated_width() > 1000) else 100
         self.pause_icon = load_local_image('pause-solid', icon_size)
         self.play_icon = load_local_image('play-solid', icon_size)
