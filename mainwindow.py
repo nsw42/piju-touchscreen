@@ -102,7 +102,7 @@ class MainWindow(Gtk.ApplicationWindow):
             fixed_container = Gtk.Fixed.new()
             x_padding = 10
             y0_padding = 10
-            label_h = 30
+            label_h = MAX_IMAGE_SIZE / 2
             fixed_container.put(self.artwork, x_padding, y0_padding)
             track_artist_x0 = x_padding + MAX_IMAGE_SIZE + x_padding
             fixed_container.put(self.track_name_label, track_artist_x0, y0_padding)
