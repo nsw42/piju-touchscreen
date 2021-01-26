@@ -62,17 +62,25 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.current_image_uri = None
 
+        def mk_label(justification=Gtk.Justification.LEFT,
+                     large=True):
+            label = Gtk.Label()
+            label.set_hexpand(True)
+            label.set_vexpand(True)
+            label.set_line_wrap(True)
+            label.set_justify(justification)
+            set_font(label,
+                     Pango.Weight.BOLD if large else Pango.Weight.NORMAL,
+                     32 if large else 24,
+                     Gdk.Color.from_floats(0.0, 0.0, 0.0) if large else Gdk.Color.from_floats(0.3, 0.3, 0.3))
+            return label
+
         self.artwork = Gtk.Image()
         self.artwork.set_hexpand(False)
         self.artwork.set_vexpand(False)
         self.artwork.set_size_request(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE)
-        self.artist_label = Gtk.Label()
-        self.track_name_label = Gtk.Label()
-        for label in (self.artist_label, self.track_name_label):
-            label.set_hexpand(True)
-            label.set_vexpand(True)
-            label.set_line_wrap(True)
-            label.set_justify(Gtk.Justification.LEFT)
+        self.track_name_label = mk_label(large=True)
+        self.artist_label = mk_label(large=False)
         self.prev_button = Gtk.Button()
         self.prev_button.connect('clicked', self.on_previous)
         self.play_pause_button = Gtk.Button()
@@ -83,9 +91,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self.next_button.set_halign(Gtk.Align.END)
         for button in (self.prev_button, self.play_pause_button, self.next_button):
             button.set_valign(Gtk.Align.CENTER)
-
-        set_font(self.track_name_label, Pango.Weight.BOLD, 32, Gdk.Color.from_floats(0.0, 0.0, 0.0))
-        set_font(self.artist_label, Pango.Weight.NORMAL, 24, Gdk.Color.from_floats(0.3, 0.3, 0.3))
 
         self.play_pause_button.connect('clicked', self.on_play_pause)
 
@@ -101,6 +106,8 @@ class MainWindow(Gtk.ApplicationWindow):
         #  prev  play/pause   next
 
         if fixed_layout:
+            self.no_track_label = mk_label(justification=Gtk.Justification.CENTER, large=False)
+
             fixed_container = Gtk.Fixed.new()
             x_padding = 10
             y0_padding = 10
@@ -113,18 +120,29 @@ class MainWindow(Gtk.ApplicationWindow):
             for label in (self.track_name_label, self.artist_label):
                 label.set_size_request(SCREEN_WIDTH - track_artist_x0 - x_padding,
                                        label_h)
+            no_track_label_w = 200
+            fixed_container.put(self.no_track_label,
+                                (SCREEN_WIDTH - no_track_label_w) / 2,
+                                150)
+            self.no_track_label.set_size_request(no_track_label_w, 32)
             # buttons
             # image is 100x100; button padding takes it to 112x110
             # (on macOS, at least)
+            #   SPC  IMG  2xSPC  IMG  2xSPC  IMG  SPC
+            # 6xSPC + 3xIMG = SCREEN_WIDTH
+            # => SPC = (SCREEN_WIDTH - 3*IMG) / 6
             img_button_w = 112
             img_button_h = 110
             y1_padding = 20
             button_y0 = SCREEN_HEIGHT - y1_padding - img_button_h
-            fixed_container.put(self.prev_button, x_padding, button_y0)
+            button_x_padding = (SCREEN_WIDTH - 3 * img_button_w) / 6
+            fixed_container.put(self.prev_button, button_x_padding, button_y0)
             fixed_container.put(self.play_pause_button, (SCREEN_WIDTH - img_button_w) / 2, button_y0)
-            fixed_container.put(self.next_button, SCREEN_WIDTH - x_padding - img_button_w, button_y0)
+            fixed_container.put(self.next_button, SCREEN_WIDTH - button_x_padding - img_button_w, button_y0)
             self.add(fixed_container)
         else:
+            self.no_track_label = self.artist_label
+
             track_artist_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
             track_artist_container.pack_start(self.track_name_label, expand=True, fill=True, padding=10)
             track_artist_container.pack_start(self.artist_label, expand=True, fill=True, padding=10)
@@ -141,6 +159,7 @@ class MainWindow(Gtk.ApplicationWindow):
             bottom_row_container.set_valign(Gtk.Align.START)
 
             child_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+            child_container.pack_start(self.no_track_label, expand=True, fill=True, padding=0)
             child_container.pack_start(top_row_container, expand=True, fill=True, padding=10)
             child_container.pack_end(bottom_row_container, expand=True, fill=False, padding=10)
 
@@ -188,20 +207,27 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def show_now_playing(self, connection_error, now_playing):
         if connection_error:
-            self.artist_label.set_label("Connection error")
-            self.track_name_label.set_label("")
+            self.artist_label.hide()
+            self.track_name_label.hide()
             self.artwork.hide()
+            self.no_track_label.show()
+            self.no_track_label.set_label("Connection error")
             self.play_pause_button.set_image(self.play_icon)
             self.prev_button.set_sensitive(False)
             self.play_pause_button.set_sensitive(False)
             self.next_button.set_sensitive(False)
         else:
             if now_playing.is_track:
+                self.no_track_label.hide()
                 self.artist_label.set_label(now_playing.artist_name or 'Unknown artist')
                 self.track_name_label.set_label(now_playing.track_name or 'Unknown track')
+                self.artist_label.show()
+                self.track_name_label.show()
             else:
-                self.artist_label.set_label('No track')
-                self.track_name_label.set_label('')
+                self.artist_label.hide()
+                self.track_name_label.hide()
+                self.no_track_label.set_label('No track')
+                self.no_track_label.show()
 
             if now_playing.image_uri != self.current_image_uri:
                 logging.debug("Updating image display")
