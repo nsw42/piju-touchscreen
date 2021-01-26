@@ -159,7 +159,6 @@ class MainWindow(Gtk.ApplicationWindow):
             bottom_row_container.set_valign(Gtk.Align.START)
 
             child_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-            child_container.pack_start(self.no_track_label, expand=True, fill=True, padding=0)
             child_container.pack_start(top_row_container, expand=True, fill=True, padding=10)
             child_container.pack_end(bottom_row_container, expand=True, fill=False, padding=10)
 
