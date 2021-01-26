@@ -116,13 +116,17 @@ class MainWindow(Gtk.ApplicationWindow):
             # buttons
             # image is 100x100; button padding takes it to 112x110
             # (on macOS, at least)
+            #   SPC  IMG  2xSPC  IMG  2xSPC  IMG  SPC
+            # 6xSPC + 3xIMG = SCREEN_WIDTH
+            # => SPC = (SCREEN_WIDTH - 3*IMG) / 6
             img_button_w = 112
             img_button_h = 110
             y1_padding = 20
             button_y0 = SCREEN_HEIGHT - y1_padding - img_button_h
-            fixed_container.put(self.prev_button, x_padding, button_y0)
+            button_x_padding = (SCREEN_WIDTH - 3 * img_button_w) / 6
+            fixed_container.put(self.prev_button, button_x_padding, button_y0)
             fixed_container.put(self.play_pause_button, (SCREEN_WIDTH - img_button_w) / 2, button_y0)
-            fixed_container.put(self.next_button, SCREEN_WIDTH - x_padding - img_button_w, button_y0)
+            fixed_container.put(self.next_button, SCREEN_WIDTH - button_x_padding - img_button_w, button_y0)
             self.add(fixed_container)
         else:
             track_artist_container = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
