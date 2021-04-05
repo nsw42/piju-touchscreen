@@ -1,5 +1,7 @@
 import argparse
 import logging
+import threading
+import time
 from urllib.parse import urlparse, urlunparse
 
 import gi
@@ -102,11 +104,17 @@ def get_current_track(jsonrpc: JsonRPC):
 
 
 def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenblankmgr: ScreenBlankMgr):
-    now_playing = get_current_track(jsonrpc)
-    window.show_now_playing(jsonrpc.connection_error, now_playing)
-    if screenblankmgr:
-        screenblankmgr.set_state(now_playing.current_state)
-    return True  # call again
+    def update_window(now_playing):
+        window.show_now_playing(jsonrpc.connection_error, now_playing)
+        if screenblankmgr:
+            screenblankmgr.set_state(now_playing.current_state)
+
+    while True:
+        logging.debug("Update")
+        now_playing = get_current_track(jsonrpc)
+        logging.debug(now_playing)
+        GLib.idle_add(update_window, now_playing)
+        time.sleep(1)
 
 
 def main():
@@ -115,10 +123,10 @@ def main():
     window = MainWindow(jsonrpc, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
     screenblankmgr = ScreenBlankMgr() if args.manage_screenblanker else None
-    GLib.timeout_add_seconds(1,
-                             update_track_display,
-                             jsonrpc, window, screenblankmgr,
-                             priority=GLib.PRIORITY_DEFAULT_IDLE)
+
+    thread = threading.Thread(target=update_track_display, args=(jsonrpc, window, screenblankmgr), daemon=True)
+    thread.start()
+
     Gtk.main()
 
 
