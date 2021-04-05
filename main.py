@@ -72,33 +72,43 @@ def parse_args():
     return args
 
 
-def get_current_track(jsonrpc: JsonRPC):
+def get_current_track(jsonrpc: JsonRPC, now_playing: NowPlaying):
     current_state = jsonrpc.request("core.playback.get_state")  # 'playing', 'paused' or 'stopped'
-    current_track_dict = jsonrpc.request("core.playback.get_current_track")
-    current_track_uri = current_track_dict['uri'] if current_track_dict else None
-    current_artist = current_track_dict['artists'] if current_track_dict else None
-    current_artist = current_artist[0] if current_artist else None
-    current_artist = current_artist['name'] if current_artist else None
-    current_track = current_track_dict['name'] if current_track_dict else None
-    current_track_number = current_track_dict['track_no'] if current_track_dict else None
-    album_dict = current_track_dict['album'] if current_track_dict else None
-    album_num_tracks = album_dict.get('num_tracks') if album_dict else None
-    current_volume = jsonrpc.request("core.mixer.get_volume")
-    current_volume = int(current_volume) if current_volume else 50
+    if (current_state == 'playing') or (current_state != now_playing.current_state):
+        now_playing.refresh_countdown = 0
 
-    artwork_cache.update(jsonrpc, current_track_uri)
+    if now_playing.refresh_countdown == 0:
+        logging.debug("Update")
+        current_track_dict = jsonrpc.request("core.playback.get_current_track")
+        current_track_uri = current_track_dict['uri'] if current_track_dict else None
+        current_artist = current_track_dict['artists'] if current_track_dict else None
+        current_artist = current_artist[0] if current_artist else None
+        current_artist = current_artist['name'] if current_artist else None
+        current_track = current_track_dict['name'] if current_track_dict else None
+        current_track_number = current_track_dict['track_no'] if current_track_dict else None
+        album_dict = current_track_dict['album'] if current_track_dict else None
+        album_num_tracks = album_dict.get('num_tracks') if album_dict else None
+        current_volume = jsonrpc.request("core.mixer.get_volume")
+        current_volume = int(current_volume) if current_volume else 50
 
-    now_playing = NowPlaying(current_artist,
-                             current_track_dict is not None,
-                             current_track,
-                             current_track_number,
-                             album_num_tracks,
-                             current_state,
-                             current_volume,
-                             artwork_cache.current_image_uri,
-                             artwork_cache.current_image,
-                             artwork_cache.current_image_width,
-                             artwork_cache.current_image_height)
+        artwork_cache.update(jsonrpc, current_track_uri)
+
+        now_playing.refresh_countdown = 5
+        now_playing.artist_name = current_artist
+        now_playing.is_track = current_track_dict is not None
+        now_playing.track_name = current_track
+        now_playing.track_number = current_track_number
+        now_playing.album_tracks = album_num_tracks
+        now_playing.current_state = current_state
+        now_playing.current_volume = current_volume
+        now_playing.image_uri = artwork_cache.current_image_uri
+        now_playing.image = artwork_cache.current_image
+        now_playing.image_width = artwork_cache.current_image_width
+        now_playing.image_height = artwork_cache.current_image_height
+
+    else:
+        now_playing.refresh_countdown -= 1
+
     # logging.debug('now_playing: %s', now_playing)
     return now_playing
 
@@ -109,9 +119,9 @@ def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenblankmgr: S
         if screenblankmgr:
             screenblankmgr.set_state(now_playing.current_state)
 
+    now_playing = NowPlaying()
     while True:
-        logging.debug("Update")
-        now_playing = get_current_track(jsonrpc)
+        get_current_track(jsonrpc, now_playing)
         logging.debug(now_playing)
         GLib.idle_add(update_window, now_playing)
         time.sleep(1)
