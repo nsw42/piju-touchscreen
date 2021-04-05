@@ -38,6 +38,8 @@ def construct_server_url(host):
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true',
+                        help="Enable debug logging")
     parser.add_argument('--host', action='store',
                         help="IP address or hostname of mopidy server. "
                              "Can include :portnumber if required. Port defaults to 6680.")
@@ -61,7 +63,8 @@ def parse_args():
                                  help="Do not hide the mouse pointer (default)")
     parser.add_argument('--manage-screenblanker', action='store_true',
                         help="Actively manage the screen blank time based on playback state")
-    parser.set_defaults(host='localhost',
+    parser.set_defaults(debug=False,
+                        host='localhost',
                         full_screen=True,
                         fixed_layout=True,
                         show_close_button=True,
@@ -129,6 +132,8 @@ def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenblankmgr: S
 
 def main():
     args = parse_args()
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
     jsonrpc = JsonRPC(args.host)
     window = MainWindow(jsonrpc, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
@@ -141,6 +146,4 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
     main()
