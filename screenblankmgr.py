@@ -66,8 +66,7 @@ class ScreenBlankProfileOnWhenPlaying(ProfileBase):
 
     def on_stop_playing(self):
         self._run_xset('on')
-        self._set_timeout(1)
-        self._run_xset('activate')
+        self._set_timeout(10)
 
     def on_playing_tick(self):
         self._run_xset('off')
