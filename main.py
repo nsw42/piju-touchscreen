@@ -12,11 +12,10 @@ gi.require_version('GLib', '2.0')
 from gi.repository import GLib  # noqa: E402 # need to call require_version before we can call this
 
 from artworkcache import ArtworkCache  # noqa: E402  # local imports after libraries
-from screenblankmgr import ScreenBlankMgr  # noqa: E402  # local imports after libraries
 from jsonrpc import JsonRPC  # noqa: E402  # local imports after libraries
 from mainwindow import MainWindow  # noqa: E402  # local imports after libraries
 from nowplaying import NowPlaying  # noqa: E402  # local imports after libraries
-
+import screenblankmgr  # noqa: E402  # local imports after libraries
 
 artwork_cache = ArtworkCache()
 
@@ -61,15 +60,15 @@ def parse_args():
                                  help="Hide the mouse pointer over the window")
     mainwindowgroup.add_argument('--no-hide-mouse-pointer', action='store_false', dest='hide_mouse_pointer',
                                  help="Do not hide the mouse pointer (default)")
-    parser.add_argument('--manage-screenblanker', action='store_true',
-                        help="Actively manage the screen blank time based on playback state")
+    parser.add_argument('--screenblanker-profile', action='store', choices=screenblankmgr.profiles.keys(),
+                        help="Actively manage the screen blank based on playback state")
     parser.set_defaults(debug=False,
                         host='localhost',
                         full_screen=True,
                         fixed_layout=True,
                         show_close_button=True,
                         hide_mouse_pointer=False,
-                        manage_screenblanker=False)
+                        screenblanker_profile='none')
     args = parser.parse_args()
     args.host = construct_server_url(args.host)
     return args
@@ -116,11 +115,10 @@ def get_current_track(jsonrpc: JsonRPC, now_playing: NowPlaying):
     return now_playing
 
 
-def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenblankmgr: ScreenBlankMgr):
+def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenmgr: screenblankmgr.ScreenBlankMgr):
     def update_window(now_playing):
         window.show_now_playing(jsonrpc.connection_error, now_playing)
-        if screenblankmgr:
-            screenblankmgr.set_state(now_playing.current_state)
+        screenmgr.set_state(now_playing.current_state)
 
     now_playing = NowPlaying()
     while True:
@@ -137,9 +135,9 @@ def main():
     jsonrpc = JsonRPC(args.host)
     window = MainWindow(jsonrpc, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
-    screenblankmgr = ScreenBlankMgr() if args.manage_screenblanker else None
+    screenmgr = screenblankmgr.ScreenBlankMgr(screenblankmgr.profiles[args.screenblanker_profile])
 
-    thread = threading.Thread(target=update_track_display, args=(jsonrpc, window, screenblankmgr), daemon=True)
+    thread = threading.Thread(target=update_track_display, args=(jsonrpc, window, screenmgr), daemon=True)
     thread.start()
 
     Gtk.main()
