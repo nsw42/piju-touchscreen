@@ -9,7 +9,7 @@ from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version
 gi.require_version('Pango', '1.0')
 from gi.repository import Pango  # noqa: E402 # need to call require_version before we can call this
 
-from jsonrpc import JsonRPC  # noqa: E402 # libraries before local imports
+from apiclient import ApiClient  # noqa: E402 # libraries before local imports
 
 
 SCREEN_WIDTH = 800
@@ -44,14 +44,14 @@ class MainWindow(Gtk.ApplicationWindow):
     """
 
     def __init__(self,
-                 jsonrpc: JsonRPC,
+                 apiclient: ApiClient,
                  full_screen: bool,
                  fixed_layout: bool,
                  show_close_button: bool,
                  hide_mouse_pointer: bool):
         Gtk.Window.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
-        self.jsonrpc = jsonrpc
+        self.apiclient = apiclient
         if full_screen:
             self.fullscreen()
         else:
@@ -179,14 +179,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.connect('realize', self.on_realized)
 
     def on_next(self, *args):
-        self.jsonrpc.request('core.playback.next')
+        self.apiclient.next()
 
     def on_play_pause(self, *args):
         if self.play_pause_action:
-            self.jsonrpc.request(self.play_pause_action)
+            self.play_pause_action()
 
     def on_previous(self, *args):
-        self.jsonrpc.request('core.playback.previous')
+        self.apiclient.previous()
 
     def on_quit(self, *args):
         Gtk.main_quit()
@@ -251,10 +251,10 @@ class MainWindow(Gtk.ApplicationWindow):
 
             if now_playing.current_state == 'playing':
                 self.play_pause_button.set_image(self.pause_icon)
-                self.play_pause_action = 'core.playback.pause'
+                self.play_pause_action = self.apiclient.pause
             else:
                 self.play_pause_button.set_image(self.play_icon)
-                self.play_pause_action = 'core.playback.play'
+                self.play_pause_action = self.apiclient.resume
 
             if now_playing.track_number:
                 self.prev_button.set_sensitive(now_playing.track_number > 1)

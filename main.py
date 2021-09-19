@@ -11,8 +11,8 @@ from gi.repository import Gtk  # noqa: E402 # need to call require_version befor
 gi.require_version('GLib', '2.0')
 from gi.repository import GLib  # noqa: E402 # need to call require_version before we can call this
 
+from apiclient import ApiClient  # noqa: E402  # local imports after libraries
 from artworkcache import ArtworkCache  # noqa: E402  # local imports after libraries
-from jsonrpc import JsonRPC  # noqa: E402  # local imports after libraries
 from mainwindow import MainWindow  # noqa: E402  # local imports after libraries
 from nowplaying import NowPlaying  # noqa: E402  # local imports after libraries
 import screenblankmgr  # noqa: E402  # local imports after libraries
@@ -21,16 +21,16 @@ artwork_cache = ArtworkCache()
 
 
 def construct_server_url(host):
-    # host is expected to be something like localhost, mopidy:6680
+    # host is expected to be something like localhost, mopidy:5000
     # but may include a scheme (http://) and even a base path, if
     # that's required for a network proxy reason
     parseresult = urlparse(host)
     if not parseresult.scheme:
         # absence of scheme results in misparsing:
-        # 'localhost:6680' is interpreted as path, instead of netloc
+        # 'localhost:5000' is interpreted as path, instead of netloc
         parseresult = urlparse('http://' + host)
     if not parseresult.port:
-        parseresult = parseresult._replace(netloc=parseresult.netloc + ':6680')
+        parseresult = parseresult._replace(netloc=parseresult.netloc + ':5000')
     parseresult = parseresult._replace(params='', query='', fragment='')
     return urlunparse(parseresult)
 
@@ -41,7 +41,7 @@ def parse_args():
                         help="Enable debug logging")
     parser.add_argument('--host', action='store',
                         help="IP address or hostname of mopidy server. "
-                             "Can include :portnumber if required. Port defaults to 6680.")
+                             "Can include :portnumber if required. Port defaults to 5000.")
     mainwindowgroup = parser.add_argument_group('Main Window options',
                                                 description='Options related to the behaviour of the main window')
     mainwindowgroup.add_argument('--full-screen', action='store_true', dest='full_screen',
@@ -74,55 +74,37 @@ def parse_args():
     return args
 
 
-def get_current_track(jsonrpc: JsonRPC, now_playing: NowPlaying):
-    current_state = jsonrpc.request("core.playback.get_state")  # 'playing', 'paused' or 'stopped'
-    if (current_state == 'playing') or (current_state != now_playing.current_state):
-        now_playing.refresh_countdown = 0
+def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
+    status = apiclient.get_current_state()
 
-    if now_playing.refresh_countdown == 0:
-        logging.debug("Update")
-        current_track_dict = jsonrpc.request("core.playback.get_current_track")
-        current_track_uri = current_track_dict['uri'] if current_track_dict else None
-        current_artist = current_track_dict['artists'] if current_track_dict else None
-        current_artist = current_artist[0] if current_artist else None
-        current_artist = current_artist['name'] if current_artist else None
-        current_track = current_track_dict['name'] if current_track_dict else None
-        current_track_number = current_track_dict['track_no'] if current_track_dict else None
-        album_dict = current_track_dict['album'] if current_track_dict else None
-        album_num_tracks = album_dict.get('num_tracks') if album_dict else None
-        current_volume = jsonrpc.request("core.mixer.get_volume")
-        current_volume = int(current_volume) if current_volume else 50
+    current_track = status.current_track
+    artwork_cache.update(apiclient, current_track.get('artworkinfo'))
 
-        artwork_cache.update(jsonrpc, current_track_uri)
-
-        now_playing.refresh_countdown = 5
-        now_playing.artist_name = current_artist
-        now_playing.is_track = current_track_dict is not None
-        now_playing.track_name = current_track
-        now_playing.track_number = current_track_number
-        now_playing.album_tracks = album_num_tracks
-        now_playing.current_state = current_state
-        now_playing.current_volume = current_volume
-        now_playing.image_uri = artwork_cache.current_image_uri
-        now_playing.image = artwork_cache.current_image
-        now_playing.image_width = artwork_cache.current_image_width
-        now_playing.image_height = artwork_cache.current_image_height
-
-    else:
-        now_playing.refresh_countdown -= 1
+    now_playing.refresh_countdown = 5
+    now_playing.is_track = current_track is not None
+    now_playing.artist_name = current_track.get('artist')
+    now_playing.track_name = current_track.get('title')
+    now_playing.track_number = current_track.get('tracknumber')
+    now_playing.album_tracks = current_track.get('trackcount')
+    now_playing.current_state = status.status
+    now_playing.current_volume = status.volume
+    now_playing.image_uri = artwork_cache.current_image_uri
+    now_playing.image = artwork_cache.current_image
+    now_playing.image_width = artwork_cache.current_image_width
+    now_playing.image_height = artwork_cache.current_image_height
 
     # logging.debug('now_playing: %s', now_playing)
     return now_playing
 
 
-def update_track_display(jsonrpc: JsonRPC, window: MainWindow, screenmgr: screenblankmgr.ScreenBlankMgr):
+def update_track_display(apiclient: ApiClient, window: MainWindow, screenmgr: screenblankmgr.ScreenBlankMgr):
     def update_window(now_playing):
-        window.show_now_playing(jsonrpc.connection_error, now_playing)
+        window.show_now_playing(apiclient.connection_error, now_playing)
         screenmgr.set_state(now_playing.current_state)
 
     now_playing = NowPlaying()
     while True:
-        get_current_track(jsonrpc, now_playing)
+        get_current_track(apiclient, now_playing)
         logging.debug(now_playing)
         GLib.idle_add(update_window, now_playing)
         time.sleep(1)
@@ -132,12 +114,12 @@ def main():
     args = parse_args()
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    jsonrpc = JsonRPC(args.host)
-    window = MainWindow(jsonrpc, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
+    apiclient = ApiClient(args.host)
+    window = MainWindow(apiclient, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
     window.show_all()
     screenmgr = screenblankmgr.ScreenBlankMgr(screenblankmgr.profiles[args.screenblanker_profile])
 
-    thread = threading.Thread(target=update_track_display, args=(jsonrpc, window, screenmgr), daemon=True)
+    thread = threading.Thread(target=update_track_display, args=(apiclient, window, screenmgr), daemon=True)
     thread.start()
 
     Gtk.main()
