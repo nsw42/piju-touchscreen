@@ -115,19 +115,35 @@ class ApiClient:
     def pause(self):
         uri = self.base_uri + '/player/pause'
         response = requests.post(uri)
+        if not response.ok:
+            logging.error("Failed to pause: status=%u, error=%s",
+                          response.status_code,
+                          response.text)
         return response.ok
 
     def resume(self):
         uri = self.base_uri + '/player/resume'
         response = requests.post(uri)
+        if not response.ok:
+            logging.error("Failed to resume: status=%u, error=%s",
+                          response.status_code,
+                          response.text)
         return response.ok
 
     def previous(self):
         uri = self.base_uri + '/player/previous'
         response = requests.post(uri)
+        if not response.ok:
+            logging.error("Failed to skip to previous track: status=%u, error=%s",
+                          response.status_code,
+                          response.text)
         return response.ok
 
     def next(self):
         uri = self.base_uri + '/player/next'
         response = requests.post(uri)
+        if not response.ok:
+            logging.error("Failed to skip to next track: status=%u, error=%s",
+                          response.status_code,
+                          response.text)
         return response.ok
