@@ -127,7 +127,7 @@ class TestGetArtworkInfo(unittest.TestCase):
                                      status_code=200,
                                      text='',
                                      json=lambda: {"width": 44, "height": 55, "image": "/artwork/12"})
-    )
+           )
     def test_status_values(self, mock_requests_get):
         client = apiclient.ApiClient('http://address/')
         info = client.get_artwork_info('/artworkinfo/12')
