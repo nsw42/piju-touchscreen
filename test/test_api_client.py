@@ -61,21 +61,15 @@ class TestGetCurrentState(unittest.TestCase):
         self.assertEqual(state.status, None)
 
     @patch('apiclient.requests.get', side_effect=[
-        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'PlayerStatus.INSTANTIATED'}),
-        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'PlayerStatus.IDLE'}),
-        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'Foobar'}),
-        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'PlayerStatus.PLAYING'}),
-        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'PlayerStatus.PAUSED'}),
-        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'Stopped'})
+        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'stopped'}),
+        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'playing'}),
+        FakeResponse(ok=True, status_code=200, text='', json=lambda: {'PlayerStatus': 'paused'}),
     ])
     def test_status_values(self, mock_requests_get):
         client = apiclient.ApiClient('http://address/')
-        self.assertEqual(client.get_current_state().status, "stopped")  # PlayerStatus.INSTANTIATED
-        self.assertEqual(client.get_current_state().status, "stopped")  # PlayerStatus.IDLE
-        self.assertEqual(client.get_current_state().status, "stopped")  # Foobar
-        self.assertEqual(client.get_current_state().status, "playing")  # PlayerStatus.PLAYING
-        self.assertEqual(client.get_current_state().status, "paused")  # PlayerStatus.PAUSED
-        self.assertEqual(client.get_current_state().status, "stopped")  # PlayerStatus.Stopped
+        self.assertEqual(client.get_current_state().status, "stopped")
+        self.assertEqual(client.get_current_state().status, "playing")
+        self.assertEqual(client.get_current_state().status, "paused")
 
 
 class TestGetArtworkInfo(unittest.TestCase):

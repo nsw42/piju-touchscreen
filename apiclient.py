@@ -47,12 +47,8 @@ class ApiClient:
             return CurrentStatus(status=None, current_track={}, volume=None)
 
         # TODO: Error handling if status is not a string
-
-        status = status.lower()
-        if '.' in status:
-            status = status.rsplit('.', 1)[-1]
-        if status not in ('playing', 'paused'):
-            status = 'stopped'
+        # player status should be one of playing/paused/stopped
+        # no fixup should be required
 
         current_track = response_body.get('CurrentTrack', {})
 
