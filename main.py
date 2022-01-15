@@ -81,7 +81,7 @@ def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
     artwork_cache.update(apiclient, current_track.get('artworkinfo'))
 
     now_playing.refresh_countdown = 5
-    now_playing.is_track = current_track is not None
+    now_playing.is_track = bool(current_track)
     now_playing.artist_name = current_track.get('artist')
     now_playing.track_name = current_track.get('title')
     now_playing.track_number = current_track.get('tracknumber')
