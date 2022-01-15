@@ -2,6 +2,8 @@ import logging
 import os.path
 
 import gi
+
+from nowplaying import NowPlaying
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk  # noqa: E402 # need to call require_version before we can call this
 from gi.repository import Gdk  # noqa: E402 # need to call require_version before we can call this
@@ -204,7 +206,7 @@ class MainWindow(Gtk.ApplicationWindow):
         next_icon = load_local_image('forward-solid', icon_size)
         self.next_button.set_image(next_icon)
 
-    def show_now_playing(self, connection_error, now_playing):
+    def show_now_playing(self, connection_error: bool, now_playing: NowPlaying):
         if connection_error:
             self.artist_label.hide()
             self.track_name_label.hide()
