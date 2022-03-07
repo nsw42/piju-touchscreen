@@ -13,9 +13,10 @@ class NowPlaying:
         self.image = None
         self.image_width = None
         self.image_height = None
+        self.scanning_active = None
 
     def __str__(self):
-        return 'NowPlaying(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)' % (
+        return 'NowPlaying(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)' % (
             self.refresh_countdown,
             self.artist_name,
             self.is_track,
@@ -26,4 +27,5 @@ class NowPlaying:
             self.current_volume,
             self.image_uri,
             self.image_width,
-            self.image_height)
+            self.image_height,
+            self.scanning_active)

@@ -3,15 +3,18 @@ import logging
 
 import requests
 
-CurrentStatus = namedtuple('CurrentStatus', 'status, current_track, volume')
-# status: str, one of "stopped", "playing", "paused"
+CurrentStatus = namedtuple('CurrentStatus', 'status, current_track, volume, scanning')
+# status: str, one of "stopped", "playing", "paused", or None for error
 # current_track: dict  (never None)
-# volume: int  (never None)
+# volume: int  (or None if status is error)
+# scanning: bool (or None if status is error)
 
 ArtworkInfo = namedtuple('ArtworkInfo', 'width height imageuri')
 # width: int or None
 # height: int or None
 # imageuri: str or None
+
+CURRENT_STATUS_ERROR = CurrentStatus(status=None, current_track={}, volume=None, scanning=None)
 
 
 class ApiClient:
@@ -25,26 +28,26 @@ class ApiClient:
         try:
             response = requests.get(self.base_uri + '/')
         except requests.exceptions.ConnectionError:
-            logging.error("Unable to connect to piju")
+            logging.error(f"Unable to connect to {self.base_uri}")
             self.connection_error = True
-            return CurrentStatus(status=None, current_track={}, volume=None)
+            return CURRENT_STATUS_ERROR
 
         self.connection_error = False
         if not response.ok:
             logging.error('Failed to get response from piju: status=%u, error=%s',
                           response.status_code,
                           response.text)
-            return CurrentStatus(status=None, current_track={}, volume=None)
+            return CURRENT_STATUS_ERROR
 
         response_body = response.json()
         if not response_body:
             logging.error("Unable to decode json response body: %s", response.text)
-            return CurrentStatus(status=None, current_track={}, volume=None)
+            return CURRENT_STATUS_ERROR
 
         status = response_body.get('PlayerStatus')
         if not status:
             logging.error("Response did not include status: %s", response.text)
-            return CurrentStatus(status=None, current_track={}, volume=None)
+            return CURRENT_STATUS_ERROR
 
         # TODO: Error handling if status is not a string
         # player status should be one of playing/paused/stopped
@@ -54,7 +57,9 @@ class ApiClient:
 
         current_volume = 50  # TODO
 
-        return CurrentStatus(status, current_track, current_volume)
+        scanning = (response_body.get('WorkerStatus', 'Idle').lower() != 'idle')
+
+        return CurrentStatus(status, current_track, current_volume, scanning)
 
     def get_artwork_info(self, info_uri_path):
         if info_uri_path is None:

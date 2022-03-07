@@ -93,6 +93,8 @@ def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
     now_playing.image_width = artwork_cache.current_image_width
     now_playing.image_height = artwork_cache.current_image_height
 
+    now_playing.scanning_active = status.scanning
+
     # logging.debug('now_playing: %s', now_playing)
     return now_playing
 

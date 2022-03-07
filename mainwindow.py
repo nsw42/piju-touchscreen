@@ -98,6 +98,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.play_pause_action = None
 
+        self.scanning_indicator_icon = load_local_image('circle-solid', 16)
+
         close_icon = load_local_image('window-close-solid', 0)
         close = Gtk.Button()
         close.set_image(close_icon)
@@ -141,6 +143,9 @@ class MainWindow(Gtk.ApplicationWindow):
             fixed_container.put(self.prev_button, button_x_padding, button_y0)
             fixed_container.put(self.play_pause_button, (SCREEN_WIDTH - img_button_w) / 2, button_y0)
             fixed_container.put(self.next_button, SCREEN_WIDTH - button_x_padding - img_button_w, button_y0)
+
+            fixed_container.put(self.scanning_indicator_icon, SCREEN_WIDTH - 20, 4)
+
             self.add(fixed_container)
         else:
             self.no_track_label = self.artist_label
@@ -213,6 +218,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.artwork.hide()
             self.no_track_label.show()
             self.no_track_label.set_label("Connection error")
+            self.scanning_indicator_icon.hide()
             self.play_pause_button.set_image(self.play_icon)
             self.prev_button.set_sensitive(False)
             self.play_pause_button.set_sensitive(False)
@@ -267,3 +273,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.prev_button.set_sensitive(False)
                 self.play_pause_button.set_sensitive(False)
                 self.next_button.set_sensitive(False)
+
+            if now_playing.scanning_active:
+                self.scanning_indicator_icon.show()
+            else:
+                self.scanning_indicator_icon.hide()
