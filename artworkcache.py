@@ -1,28 +1,34 @@
 import logging
-import requests
+
+from apiclient import ApiClient
 
 
 class ArtworkCache:
     def __init__(self):
-        self.current_track_uri = None
+        self.current_info_uri = None
         self.current_image_uri = None
         self.current_image = None
         self.current_image_width = None
         self.current_image_height = None
 
-    def update(self, jsonrpc, new_track_uri):
-        if new_track_uri == self.current_track_uri:
+    def update(self, apiclient: ApiClient, new_info_uri: str):
+        if new_info_uri == self.current_info_uri:
             # nothing to do
             return
 
-        image_dict = jsonrpc.request("core.library.get_images", {
-            "uris": [new_track_uri]
-        })
-        image_list = image_dict[new_track_uri] if image_dict else None
-        image_dict = image_list[0] if image_list else None
-        image_uri = jsonrpc.base_uri + image_dict['uri'] if image_dict else None
-        image_width = image_dict['width'] if image_dict else None
-        image_height = image_dict['height'] if image_dict else None
+        if new_info_uri is None:
+            self.current_info_uri = new_info_uri
+            self.current_image_uri = None
+            self.current_image = None
+            self.current_image_width = None
+            self.current_image_height = None
+            return
+
+        artwork_info = apiclient.get_artwork_info(new_info_uri)
+
+        image_uri = artwork_info.imageuri
+        image_width = artwork_info.width
+        image_height = artwork_info.height
 
         if image_uri == self.current_image_uri:
             # nothing to do
@@ -30,20 +36,13 @@ class ArtworkCache:
 
         # if we get here, we need to update our cache
         if image_uri:
-            logging.debug("Fetching new artwork: %s", image_uri)
-            response = requests.get(image_uri, allow_redirects=True)
-            ok = response.ok
+            logging.debug("Fetching new artwork: %s", artwork_info.imageuri)
+            artwork = apiclient.get_artwork(artwork_info.imageuri)
         else:
-            response = None
-            ok = False
+            artwork = None
 
-        if ok:
-            self.current_image = response.content
-            self.current_track_uri = new_track_uri
-            self.current_image_uri = image_uri
-        else:
-            self.current_image = None
-            self.current_track_uri = None
-            self.current_image_uri = None
+        self.current_info_uri = new_info_uri
+        self.current_image_uri = image_uri
+        self.current_image = artwork
         self.current_image_width = image_width
         self.current_image_height = image_height

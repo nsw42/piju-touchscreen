@@ -2,6 +2,8 @@ import logging
 import os.path
 
 import gi
+
+from nowplaying import NowPlaying
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk  # noqa: E402 # need to call require_version before we can call this
 from gi.repository import Gdk  # noqa: E402 # need to call require_version before we can call this
@@ -9,7 +11,7 @@ from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version
 gi.require_version('Pango', '1.0')
 from gi.repository import Pango  # noqa: E402 # need to call require_version before we can call this
 
-from jsonrpc import JsonRPC  # noqa: E402 # libraries before local imports
+from apiclient import ApiClient  # noqa: E402 # libraries before local imports
 
 
 SCREEN_WIDTH = 800
@@ -44,14 +46,14 @@ class MainWindow(Gtk.ApplicationWindow):
     """
 
     def __init__(self,
-                 jsonrpc: JsonRPC,
+                 apiclient: ApiClient,
                  full_screen: bool,
                  fixed_layout: bool,
                  show_close_button: bool,
                  hide_mouse_pointer: bool):
         Gtk.Window.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
-        self.jsonrpc = jsonrpc
+        self.apiclient = apiclient
         if full_screen:
             self.fullscreen()
         else:
@@ -96,6 +98,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.play_pause_action = None
 
+        self.scanning_indicator_icon = load_local_image('circle-solid', 16)
+
         close_icon = load_local_image('window-close-solid', 0)
         close = Gtk.Button()
         close.set_image(close_icon)
@@ -139,6 +143,9 @@ class MainWindow(Gtk.ApplicationWindow):
             fixed_container.put(self.prev_button, button_x_padding, button_y0)
             fixed_container.put(self.play_pause_button, (SCREEN_WIDTH - img_button_w) / 2, button_y0)
             fixed_container.put(self.next_button, SCREEN_WIDTH - button_x_padding - img_button_w, button_y0)
+
+            fixed_container.put(self.scanning_indicator_icon, SCREEN_WIDTH - 20, 4)
+
             self.add(fixed_container)
         else:
             self.no_track_label = self.artist_label
@@ -179,14 +186,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.connect('realize', self.on_realized)
 
     def on_next(self, *args):
-        self.jsonrpc.request('core.playback.next')
+        self.apiclient.next()
 
     def on_play_pause(self, *args):
         if self.play_pause_action:
-            self.jsonrpc.request(self.play_pause_action)
+            self.play_pause_action()
 
     def on_previous(self, *args):
-        self.jsonrpc.request('core.playback.previous')
+        self.apiclient.previous()
 
     def on_quit(self, *args):
         Gtk.main_quit()
@@ -204,13 +211,14 @@ class MainWindow(Gtk.ApplicationWindow):
         next_icon = load_local_image('forward-solid', icon_size)
         self.next_button.set_image(next_icon)
 
-    def show_now_playing(self, connection_error, now_playing):
+    def show_now_playing(self, connection_error: bool, now_playing: NowPlaying):
         if connection_error:
             self.artist_label.hide()
             self.track_name_label.hide()
             self.artwork.hide()
             self.no_track_label.show()
             self.no_track_label.set_label("Connection error")
+            self.scanning_indicator_icon.hide()
             self.play_pause_button.set_image(self.play_icon)
             self.prev_button.set_sensitive(False)
             self.play_pause_button.set_sensitive(False)
@@ -251,10 +259,10 @@ class MainWindow(Gtk.ApplicationWindow):
 
             if now_playing.current_state == 'playing':
                 self.play_pause_button.set_image(self.pause_icon)
-                self.play_pause_action = 'core.playback.pause'
+                self.play_pause_action = self.apiclient.pause
             else:
                 self.play_pause_button.set_image(self.play_icon)
-                self.play_pause_action = 'core.playback.play'
+                self.play_pause_action = self.apiclient.resume
 
             if now_playing.track_number:
                 self.prev_button.set_sensitive(now_playing.track_number > 1)
@@ -265,3 +273,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.prev_button.set_sensitive(False)
                 self.play_pause_button.set_sensitive(False)
                 self.next_button.set_sensitive(False)
+
+            if now_playing.scanning_active:
+                self.scanning_indicator_icon.show()
+            else:
+                self.scanning_indicator_icon.hide()
