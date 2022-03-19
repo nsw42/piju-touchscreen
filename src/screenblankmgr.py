@@ -12,12 +12,27 @@ class ProfileBase:
         raise NotImplementedError()
 
     def on_start_playing(self):
+        """
+        Callback called on the transition from 'not playing' to 'playing'
+        """
         raise NotImplementedError()
 
     def on_stop_playing(self):
+        """
+        Callback called on the transition from 'playing' to 'not playing'
+        """
         raise NotImplementedError()
 
     def on_playing_tick(self):
+        """
+        Callback called every 5 'playing' updates
+        """
+        raise NotImplementedError()
+
+    def on_stopped_delayed(self):
+        """
+        Callback called once, 10 updates after the transition from 'playing' to 'not playing'
+        """
         raise NotImplementedError()
 
     def _set_timeout(self, timeout):
@@ -27,6 +42,9 @@ class ProfileBase:
         cmd = ['xset', 's', s_arg]
         logging.debug(cmd)
         subprocess.run(cmd)
+
+    def _blank_screen_now(self):
+        self._run_xset('activate')
 
 
 class ScreenBlankProfileNone(ProfileBase):
@@ -46,6 +64,10 @@ class ScreenBlankProfileNone(ProfileBase):
         "Do nothing except prevent the NotImplementedError"
         pass
 
+    def on_stopped_delayed(self):
+        "Do nothing except prevent the NotImplementedError"
+        pass
+
 
 class ScreenBlankProfileBalanced(ProfileBase):
     def __init__(self):
@@ -61,6 +83,9 @@ class ScreenBlankProfileBalanced(ProfileBase):
     def on_playing_tick(self):
         "Do nothing except prevent the NotImplementedError"
         pass
+
+    def on_stopped_delayed(self):
+        self._blank_screen_now()
 
 
 class ScreenBlankProfileOnWhenPlaying(ProfileBase):
@@ -79,6 +104,9 @@ class ScreenBlankProfileOnWhenPlaying(ProfileBase):
         self._run_xset('off')
         self._run_xset('reset')
 
+    def on_stopped_delayed(self):
+        self._blank_screen_now()
+
 
 class ScreenBlankMgr:
     def __init__(self, profile: ProfileBase):
@@ -92,17 +120,22 @@ class ScreenBlankMgr:
         """
         new_state = PlayingState.active if (new_state == 'playing') else PlayingState.inactive
         if self.state == new_state:
+            self.tick_countdown -= 1
             if self.state == PlayingState.active:
-                self.tick_countdown -= 1
                 if self.tick_countdown <= 0:
                     self.profile.on_playing_tick()
                     self.tick_countdown = 5
+            else:
+                if self.tick_countdown == 0:
+                    self.profile.on_stopped_delayed()
         else:
             self.state = new_state
             if self.state == PlayingState.active:
                 self.profile.on_start_playing()
+                self.tick_countdown = 5
             else:
                 self.profile.on_stop_playing()
+                self.tick_countdown = 10
 
 
 profiles = {

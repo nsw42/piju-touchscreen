@@ -53,3 +53,18 @@ class TestSetState(unittest.TestCase):
             mgr.set_state('playing')
             calls = [call(), call()]
             mock_on_playing_tick.assert_has_calls(calls)
+
+    def test_10_inactive_calls_turns_off_display(self):
+        with patch.object(ScreenBlankProfileNone, 'on_stopped_delayed') as mock_on_stopped_delayed:
+            profile = ScreenBlankProfileNone()
+            mgr = ScreenBlankMgr(profile=profile)
+            mgr.set_state('paused')  # set the baseline for playing state inactive
+            for i in range(9):
+                mgr.set_state('paused')
+            mock_on_stopped_delayed.assert_not_called()
+            mgr.set_state('paused')
+            mock_on_stopped_delayed.assert_called_once()
+            # and check that it's not called again
+            for i in range(30):
+                mgr.set_state('paused')
+            mock_on_stopped_delayed.assert_called_once()
