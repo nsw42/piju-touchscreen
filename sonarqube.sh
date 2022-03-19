@@ -1,5 +1,10 @@
 #! /bin/bash
 
+# Requires the SonarQube server to be running: use either
+# sonar console
+# or
+# sonar start
+
 sonar-scanner  \
   -Dsonar.projectKey=pijuui \
   -Dsonar.sources=./src \
