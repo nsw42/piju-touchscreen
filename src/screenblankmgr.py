@@ -3,8 +3,8 @@ import subprocess
 
 
 class PlayingState:
-    Inactive = 0
-    Active = 1
+    inactive = 0
+    active = 1
 
 
 class ProfileBase:
@@ -90,16 +90,16 @@ class ScreenBlankMgr:
         """
         new_state in ('playing', 'paused', 'stopped')
         """
-        new_state = PlayingState.Active if (new_state == 'playing') else PlayingState.Inactive
+        new_state = PlayingState.active if (new_state == 'playing') else PlayingState.inactive
         if self.state == new_state:
-            if self.state == PlayingState.Active:
+            if self.state == PlayingState.active:
                 self.tick_countdown -= 1
                 if self.tick_countdown <= 0:
                     self.profile.on_playing_tick()
                     self.tick_countdown = 5
         else:
             self.state = new_state
-            if self.state == PlayingState.Active:
+            if self.state == PlayingState.active:
                 self.profile.on_start_playing()
             else:
                 self.profile.on_stop_playing()
