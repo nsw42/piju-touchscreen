@@ -10,9 +10,9 @@ CurrentStatus = namedtuple('CurrentStatus', 'status, current_track, volume, scan
 # scanning: bool (or None if status is error)
 
 ArtworkInfo = namedtuple('ArtworkInfo', 'width height imageuri')
-# width: int or None
-# height: int or None
-# imageuri: str or None
+# width: int (or None if there's no artwork)
+# height: int (or None if there's no artwork)
+# imageuri: str (or None if there's no artwork)
 
 CURRENT_STATUS_ERROR = CurrentStatus(status=None, current_track={}, volume=None, scanning=None)
 
