@@ -212,70 +212,77 @@ class MainWindow(Gtk.ApplicationWindow):
         next_icon = load_local_image('forward-solid', icon_size)
         self.next_button.set_image(next_icon)
 
-    def show_now_playing(self, connection_error: bool, now_playing: NowPlaying):
-        if connection_error:
+    def show_connection_error(self):
+        self.artist_label.hide()
+        self.track_name_label.hide()
+        self.artwork.hide()
+        self.no_track_label.show()
+        self.no_track_label.set_label("Connection error")
+        self.scanning_indicator_icon.hide()
+        self.play_pause_button.set_image(self.play_icon)
+        self.prev_button.set_sensitive(False)
+        self.play_pause_button.set_sensitive(False)
+        self.next_button.set_sensitive(False)
+
+    def show_now_playing_artist_and_track(self, now_playing: NowPlaying):
+        if now_playing.is_track:
+            self.no_track_label.hide()
+            self.artist_label.set_label(now_playing.artist_name or 'Unknown artist')
+            self.track_name_label.set_label(now_playing.track_name or 'Unknown track')
+            self.artist_label.show()
+            self.track_name_label.show()
+        else:
             self.artist_label.hide()
             self.track_name_label.hide()
-            self.artwork.hide()
+            self.no_track_label.set_label('No track')
             self.no_track_label.show()
-            self.no_track_label.set_label("Connection error")
-            self.scanning_indicator_icon.hide()
-            self.play_pause_button.set_image(self.play_icon)
-            self.prev_button.set_sensitive(False)
-            self.play_pause_button.set_sensitive(False)
-            self.next_button.set_sensitive(False)
+
+    def show_now_playing_image(self, now_playing: NowPlaying):
+        if now_playing.image_uri != self.current_image_uri:
+            logging.debug("Updating image display")
+            if now_playing.image:
+                loader = GdkPixbuf.PixbufLoader()
+                loader.write(now_playing.image)
+                pixbuf = loader.get_pixbuf()
+                loader.close()
+                if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
+                    if now_playing.image_width > now_playing.image_height:
+                        dest_width = MAX_IMAGE_SIZE
+                        dest_height = now_playing.image_height * dest_width / now_playing.image_width
+                    else:
+                        dest_height = MAX_IMAGE_SIZE
+                        dest_width = now_playing.image_width * dest_height / now_playing.image_height
+                    pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
+                self.artwork.set_from_pixbuf(pixbuf)
+                self.artwork.show()
+            else:
+                self.artwork.hide()
+            self.current_image_uri = now_playing.image_uri
+
+    def show_now_playing_play_pause_icon(self, now_playing: NowPlaying):
+        if now_playing.current_state == 'playing':
+            self.play_pause_button.set_image(self.pause_icon)
+            self.play_pause_action = self.apiclient.pause
         else:
-            if now_playing.is_track:
-                self.no_track_label.hide()
-                self.artist_label.set_label(now_playing.artist_name or 'Unknown artist')
-                self.track_name_label.set_label(now_playing.track_name or 'Unknown track')
-                self.artist_label.show()
-                self.track_name_label.show()
-            else:
-                self.artist_label.hide()
-                self.track_name_label.hide()
-                self.no_track_label.set_label('No track')
-                self.no_track_label.show()
+            self.play_pause_button.set_image(self.play_icon)
+            self.play_pause_action = self.apiclient.resume
 
-            if now_playing.image_uri != self.current_image_uri:
-                logging.debug("Updating image display")
-                if now_playing.image:
-                    loader = GdkPixbuf.PixbufLoader()
-                    loader.write(now_playing.image)
-                    pixbuf = loader.get_pixbuf()
-                    loader.close()
-                    if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
-                        if now_playing.image_width > now_playing.image_height:
-                            dest_width = MAX_IMAGE_SIZE
-                            dest_height = now_playing.image_height * dest_width / now_playing.image_width
-                        else:
-                            dest_height = MAX_IMAGE_SIZE
-                            dest_width = now_playing.image_width * dest_height / now_playing.image_height
-                        pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
-                    self.artwork.set_from_pixbuf(pixbuf)
-                    self.artwork.show()
-                else:
-                    self.artwork.hide()
-                self.current_image_uri = now_playing.image_uri
+    def show_now_playing_prev_next(self, now_playing: NowPlaying):
+        have_track_number = bool(now_playing.track_number)
+        self.prev_button.set_sensitive(have_track_number and now_playing.track_number > 1)
+        self.play_pause_button.set_sensitive(have_track_number)
+        self.next_button.set_sensitive(have_track_number
+                                       and (now_playing.album_tracks is not None)
+                                       and (now_playing.track_number < now_playing.album_tracks))
 
-            if now_playing.current_state == 'playing':
-                self.play_pause_button.set_image(self.pause_icon)
-                self.play_pause_action = self.apiclient.pause
-            else:
-                self.play_pause_button.set_image(self.play_icon)
-                self.play_pause_action = self.apiclient.resume
+    def show_now_playing(self, connection_error: bool, now_playing: NowPlaying):
+        if connection_error:
+            self.show_connection_error()
+            return
 
-            if now_playing.track_number:
-                self.prev_button.set_sensitive(now_playing.track_number > 1)
-                self.play_pause_button.set_sensitive(True)
-                self.next_button.set_sensitive((now_playing.album_tracks is not None)
-                                               and (now_playing.track_number < now_playing.album_tracks))
-            else:
-                self.prev_button.set_sensitive(False)
-                self.play_pause_button.set_sensitive(False)
-                self.next_button.set_sensitive(False)
+        self.show_now_playing_artist_and_track(now_playing)
+        self.show_now_playing_image(now_playing)
+        self.show_now_playing_play_pause_icon(now_playing)
+        self.show_now_playing_prev_next(now_playing)
 
-            if now_playing.scanning_active:
-                self.scanning_indicator_icon.show()
-            else:
-                self.scanning_indicator_icon.hide()
+        self.scanning_indicator_icon.set_visible(now_playing.scanning_active)
