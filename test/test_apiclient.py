@@ -182,5 +182,31 @@ class TestGetArtwork(unittest.TestCase):
         self.assertEqual(artwork, 'MyArtworkHere')
 
 
+class TestApiCommands(unittest.TestCase):
+    @patch('apiclient.requests.post')
+    def test_pause(self, mock_post):
+        client = apiclient.ApiClient('http://address/')
+        client.pause()
+        mock_post.assert_called_once_with('http://address/player/pause')
+
+    @patch('apiclient.requests.post')
+    def test_resume(self, mock_post):
+        client = apiclient.ApiClient('http://address/')
+        client.resume()
+        mock_post.assert_called_once_with('http://address/player/resume')
+
+    @patch('apiclient.requests.post')
+    def test_previous(self, mock_post):
+        client = apiclient.ApiClient('http://address/')
+        client.previous()
+        mock_post.assert_called_once_with('http://address/player/previous')
+
+    @patch('apiclient.requests.post')
+    def test_next(self, mock_post):
+        client = apiclient.ApiClient('http://address/')
+        client.next()
+        mock_post.assert_called_once_with('http://address/player/next')
+
+
 if __name__ == '__main__':
     unittest.main()
