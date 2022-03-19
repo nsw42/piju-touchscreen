@@ -40,6 +40,20 @@ def set_font(label, weight, font_size, colour):
     label.modify_fg(Gtk.StateType.NORMAL, colour)
 
 
+def mk_label(justification=Gtk.Justification.LEFT,
+             large=True):
+    label = Gtk.Label()
+    label.set_hexpand(True)
+    label.set_vexpand(True)
+    label.set_line_wrap(True)
+    label.set_justify(justification)
+    set_font(label,
+             Pango.Weight.BOLD if large else Pango.Weight.NORMAL,
+             32 if large else 24,
+             Gdk.Color.from_floats(0.0, 0.0, 0.0) if large else Gdk.Color.from_floats(0.3, 0.3, 0.3))
+    return label
+
+
 class MainWindow(Gtk.ApplicationWindow):
     """
     Main application window
@@ -63,19 +77,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self.pause_icon = None
 
         self.current_image_uri = None
-
-        def mk_label(justification=Gtk.Justification.LEFT,
-                     large=True):
-            label = Gtk.Label()
-            label.set_hexpand(True)
-            label.set_vexpand(True)
-            label.set_line_wrap(True)
-            label.set_justify(justification)
-            set_font(label,
-                     Pango.Weight.BOLD if large else Pango.Weight.NORMAL,
-                     32 if large else 24,
-                     Gdk.Color.from_floats(0.0, 0.0, 0.0) if large else Gdk.Color.from_floats(0.3, 0.3, 0.3))
-            return label
 
         self.artwork = Gtk.Image()
         self.artwork.set_hexpand(False)
