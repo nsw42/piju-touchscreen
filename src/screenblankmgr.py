@@ -31,20 +31,25 @@ class ProfileBase:
 
 class ScreenBlankProfileNone(ProfileBase):
     def __init__(self):
+        "Do nothing except prevent the NotImplementedError"
         pass
 
     def on_start_playing(self):
+        "Do nothing except prevent the NotImplementedError"
         pass
 
     def on_stop_playing(self):
+        "Do nothing except prevent the NotImplementedError"
         pass
 
     def on_playing_tick(self):
+        "Do nothing except prevent the NotImplementedError"
         pass
 
 
 class ScreenBlankProfileBalanced(ProfileBase):
     def __init__(self):
+        "Do nothing except prevent the NotImplementedError"
         pass
 
     def on_start_playing(self):
@@ -54,11 +59,13 @@ class ScreenBlankProfileBalanced(ProfileBase):
         self._set_timeout(self, 30)
 
     def on_playing_tick(self):
+        "Do nothing except prevent the NotImplementedError"
         pass
 
 
 class ScreenBlankProfileOnWhenPlaying(ProfileBase):
     def __init__(self):
+        "Do nothing except prevent the NotImplementedError"
         pass
 
     def on_start_playing(self):
