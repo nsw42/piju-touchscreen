@@ -99,7 +99,6 @@ def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
 
     now_playing.scanning_active = status.scanning
 
-    # logging.debug('now_playing: %s', now_playing)
     return now_playing
 
 
