@@ -1,5 +1,6 @@
 import argparse
 import logging
+import pathlib
 import threading
 import time
 from urllib.parse import urlparse, urlunparse
@@ -39,6 +40,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true',
                         help="Enable debug logging")
+    parser.add_argument('--logfile', action='store', type=pathlib.Path,
+                        help="Write logging to LOGFILE")
     parser.add_argument('--host', action='store',
                         help="IP address or hostname of mopidy server. "
                              "Can include :portnumber if required. Port defaults to 5000.")
@@ -63,6 +66,7 @@ def parse_args():
     parser.add_argument('--screenblanker-profile', action='store', choices=screenblankmgr.profiles.keys(),
                         help="Actively manage the screen blank based on playback state")
     parser.set_defaults(debug=False,
+                        logfile=None,
                         host='localhost',
                         full_screen=True,
                         fixed_layout=True,
@@ -114,7 +118,8 @@ def update_track_display(apiclient: ApiClient, window: MainWindow, screenmgr: sc
 
 def main():
     args = parse_args()
-    logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR)
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR,
+                        filename=args.logfile)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     apiclient = ApiClient(args.host)
     window = MainWindow(apiclient, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
