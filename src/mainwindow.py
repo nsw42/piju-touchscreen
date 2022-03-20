@@ -25,7 +25,7 @@ def load_local_image(icon_name, icon_size):
     if icon_size:
         leafname += '_%u' % icon_size
     leafname += '.png'
-    icon_filename = os.path.join(os.path.dirname(__file__), leafname)
+    icon_filename = os.path.join(os.path.dirname(__file__), os.path.pardir, 'icons', leafname)
     assert os.path.exists(icon_filename)
     return Gtk.Image.new_from_file(icon_filename)
 
