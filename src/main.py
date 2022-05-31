@@ -88,8 +88,8 @@ def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
     now_playing.is_track = bool(current_track)
     now_playing.artist_name = current_track.get('artist')
     now_playing.track_name = current_track.get('title')
-    now_playing.track_number = current_track.get('tracknumber')
-    now_playing.album_tracks = current_track.get('trackcount')
+    now_playing.track_number = status.current_track_index
+    now_playing.album_tracks = status.maximum_track_index
     now_playing.current_state = status.status
     now_playing.current_volume = status.volume
     now_playing.image_uri = artwork_cache.current_image_uri
