@@ -1,4 +1,4 @@
-# pijuui
+# piju-touchscreen
 
 Touch-screen UI for <https://github.com/nsw42/piju>
 
@@ -50,7 +50,7 @@ As root:
     apk add py3-gobject3
     ```
 
-* Download (or git clone) <https://github.com/nsw42/pijuui>
+* Download (or git clone) <https://github.com/nsw42/piju-touchscreen>
 * `pip install -r requirements.txt`
 
 ## Make the UI start automatically
@@ -96,7 +96,7 @@ user on the console, and for that user's login script to startx:
 
   startxfce4 &
   sleep 10
-  exec $(dirname $0)/pijuui/run.sh
+  exec $(dirname $0)/piju-touchscreen/run.sh
   ```
 
   TODO: This runs `startxfce4` because the python application wasn't filling the screen otherwise. It shouldn't be necessary to run the window manager, though.
