@@ -23,7 +23,7 @@ MAX_IMAGE_SIZE = 300
 def load_local_image(icon_name, icon_size):
     leafname = icon_name
     if icon_size:
-        leafname += '_%u' % icon_size
+        leafname += f'_{icon_size}'
     leafname += '.png'
     icon_filename = os.path.join(os.path.dirname(__file__), os.path.pardir, 'icons', leafname)
     assert os.path.exists(icon_filename)
@@ -237,27 +237,40 @@ class MainWindow(Gtk.ApplicationWindow):
             self.no_track_label.set_label('No track')
             self.no_track_label.show()
 
-    def show_now_playing_image(self, now_playing: NowPlaying):
-        if now_playing.image_uri != self.current_image_uri:
-            logging.debug("Updating image display")
-            if now_playing.image:
-                loader = GdkPixbuf.PixbufLoader()
-                loader.write(now_playing.image)
-                pixbuf = loader.get_pixbuf()
-                loader.close()
-                if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
-                    if now_playing.image_width > now_playing.image_height:
-                        dest_width = MAX_IMAGE_SIZE
-                        dest_height = now_playing.image_height * dest_width / now_playing.image_width
-                    else:
-                        dest_height = MAX_IMAGE_SIZE
-                        dest_width = now_playing.image_width * dest_height / now_playing.image_height
-                    pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
-                self.artwork.set_from_pixbuf(pixbuf)
-                self.artwork.show()
+    def show_now_playing_image_inner(self, now_playing: NowPlaying):
+        """
+        Returns True if successful
+        """
+        if now_playing.image:
+            return False
+        loader = GdkPixbuf.PixbufLoader()
+        try:
+            loader.write(now_playing.image)
+        except gi.repository.GLib.GError as exc:
+            logging.error(f"Error loading image into pixbuf: {exc}")
+            return False
+        pixbuf = loader.get_pixbuf()
+        loader.close()
+        if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
+            if now_playing.image_width > now_playing.image_height:
+                dest_width = MAX_IMAGE_SIZE
+                dest_height = now_playing.image_height * dest_width / now_playing.image_width
             else:
-                self.artwork.hide()
-            self.current_image_uri = now_playing.image_uri
+                dest_height = MAX_IMAGE_SIZE
+                dest_width = now_playing.image_width * dest_height / now_playing.image_height
+            pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
+        self.artwork.set_from_pixbuf(pixbuf)
+        self.artwork.show()
+        return True
+
+    def show_now_playing_image(self, now_playing: NowPlaying):
+        if now_playing.image_uri == self.current_image_uri:
+            # Nothing to do
+            return
+        logging.debug("Updating image display")
+        if not self.show_now_playing_image_inner(now_playing):
+            self.artwork.hide()
+        self.current_image_uri = now_playing.image_uri
 
     def show_now_playing_play_pause_icon(self, now_playing: NowPlaying):
         if now_playing.current_state == 'playing':
