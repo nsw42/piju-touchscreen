@@ -241,7 +241,7 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         Returns True if successful
         """
-        if now_playing.image:
+        if not now_playing.image:
             return False
         loader = GdkPixbuf.PixbufLoader()
         try:
