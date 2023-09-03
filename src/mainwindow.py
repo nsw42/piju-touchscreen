@@ -189,20 +189,20 @@ class MainWindow(Gtk.ApplicationWindow):
         self.hide_mouse_pointer = hide_mouse_pointer
         self.connect('realize', self.on_realized)
 
-    def on_next(self, *args):
+    def on_next(self, *_):
         self.apiclient.next()
 
-    def on_play_pause(self, *args):
+    def on_play_pause(self, *_):
         if self.play_pause_action:
             self.play_pause_action()
 
-    def on_previous(self, *args):
+    def on_previous(self, *_):
         self.apiclient.previous()
 
-    def on_quit(self, *args):
+    def on_quit(self, *_):
         Gtk.main_quit()
 
-    def on_realized(self, *args):
+    def on_realized(self, *_):
         if self.hide_mouse_pointer:
             self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
         logging.debug("Main window realized: allocated size %ux%u",
