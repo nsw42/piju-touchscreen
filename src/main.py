@@ -90,6 +90,7 @@ def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
     now_playing.track_name = current_track.get('title')
     now_playing.track_number = status.current_track_index
     now_playing.album_tracks = status.maximum_track_index
+    now_playing.stream_name = status.current_stream
     now_playing.current_state = status.status
     now_playing.current_volume = status.volume
     now_playing.image_uri = artwork_cache.current_image_uri

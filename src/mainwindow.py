@@ -231,6 +231,11 @@ class MainWindow(Gtk.ApplicationWindow):
             self.track_name_label.set_label(now_playing.track_name or 'Unknown track')
             self.artist_label.show()
             self.track_name_label.show()
+        elif now_playing.stream_name:
+            self.no_track_label.hide()
+            self.track_name_label.set_label(now_playing.stream_name)
+            self.track_name_label.show()
+            self.artist_label.hide()
         else:
             self.artist_label.hide()
             self.track_name_label.hide()
