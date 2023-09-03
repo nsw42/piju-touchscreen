@@ -65,7 +65,7 @@ class MainWindow(Gtk.ApplicationWindow):
                  fixed_layout: bool,
                  show_close_button: bool,
                  hide_mouse_pointer: bool):
-        Gtk.Window.__init__(self, title="PiJu")
+        Gtk.ApplicationWindow.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
         self.apiclient = apiclient
         if full_screen:
