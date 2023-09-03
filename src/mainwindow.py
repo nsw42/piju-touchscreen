@@ -5,6 +5,9 @@ import gi
 
 from nowplaying import NowPlaying
 gi.require_version('Gtk', '3.0')
+# pylint: disable=wrong-import-position,wrong-import-order
+# (need to call require_version before we can import the other gi libraries, and we want
+# third-party libraries before local libraries)
 from gi.repository import Gtk  # noqa: E402 # need to call require_version before we can call this
 from gi.repository import Gdk  # noqa: E402 # need to call require_version before we can call this
 from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version before we can call this
@@ -12,7 +15,7 @@ gi.require_version('Pango', '1.0')
 from gi.repository import Pango  # noqa: E402 # need to call require_version before we can call this
 
 from apiclient import ApiClient  # noqa: E402 # libraries before local imports
-
+# pylint: enable=wrong-import-position,wrong-import-order
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 480

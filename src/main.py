@@ -7,6 +7,9 @@ from urllib.parse import urlparse, urlunparse
 
 import gi
 gi.require_version('Gtk', '3.0')
+# pylint: disable=wrong-import-position,wrong-import-order
+# (need to call require_version before we can import the other gi libraries, and we want
+# third-party libraries before local libraries)
 from gi.repository import Gtk  # noqa: E402 # need to call require_version before we can call this
 
 gi.require_version('GLib', '2.0')
@@ -17,6 +20,7 @@ from artworkcache import ArtworkCache  # noqa: E402  # local imports after libra
 from mainwindow import MainWindow  # noqa: E402  # local imports after libraries
 from nowplaying import NowPlaying  # noqa: E402  # local imports after libraries
 import screenblankmgr  # noqa: E402  # local imports after libraries
+# pylint: enable=wrong-import-position,wrong-import-order
 
 artwork_cache = ArtworkCache()
 
