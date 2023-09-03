@@ -3,7 +3,8 @@ import logging
 
 import requests
 
-CurrentStatus = namedtuple('CurrentStatus', 'status, current_track, volume, scanning, '
+CurrentStatus = namedtuple('CurrentStatus', 'status, current_track, current_stream, '
+                                            'volume, scanning, '
                                             'current_track_index, maximum_track_index')
 # status: str, one of "stopped", "playing", "paused", or None for error
 # current_track: dict  (never None)
@@ -15,7 +16,8 @@ ArtworkInfo = namedtuple('ArtworkInfo', 'width height imageuri')
 # height: int (or None if there's no artwork)
 # imageuri: str (or None if there's no artwork)
 
-CURRENT_STATUS_ERROR = CurrentStatus(status=None, current_track={}, volume=None, scanning=None,
+CURRENT_STATUS_ERROR = CurrentStatus(status=None, current_track={}, current_stream=None,
+                                     volume=None, scanning=None,
                                      current_track_index=None, maximum_track_index=None)
 
 
@@ -57,6 +59,8 @@ class ApiClient:
 
         current_track = response_body.get('CurrentTrack', {})
 
+        current_stream = response_body.get('CurrentStream')
+
         current_volume = 50  # TODO
 
         scanning = (response_body.get('WorkerStatus', 'Idle').lower() != 'idle')
@@ -64,7 +68,9 @@ class ApiClient:
         current_track_index = response_body.get('CurrentTrackIndex', None)
         maximum_track_index = response_body.get('MaximumTrackIndex', None)
 
-        return CurrentStatus(status, current_track, current_volume, scanning, current_track_index, maximum_track_index)
+        return CurrentStatus(status, current_track, current_stream,
+                             current_volume, scanning,
+                             current_track_index, maximum_track_index)
 
     def get_artwork_info(self, info_uri_path):
         if info_uri_path is None:

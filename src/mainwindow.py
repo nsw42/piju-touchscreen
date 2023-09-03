@@ -5,6 +5,9 @@ import gi
 
 from nowplaying import NowPlaying
 gi.require_version('Gtk', '3.0')
+# pylint: disable=wrong-import-position,wrong-import-order
+# (need to call require_version before we can import the other gi libraries, and we want
+# third-party libraries before local libraries)
 from gi.repository import Gtk  # noqa: E402 # need to call require_version before we can call this
 from gi.repository import Gdk  # noqa: E402 # need to call require_version before we can call this
 from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version before we can call this
@@ -12,7 +15,7 @@ gi.require_version('Pango', '1.0')
 from gi.repository import Pango  # noqa: E402 # need to call require_version before we can call this
 
 from apiclient import ApiClient  # noqa: E402 # libraries before local imports
-
+# pylint: enable=wrong-import-position,wrong-import-order
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 480
@@ -65,7 +68,7 @@ class MainWindow(Gtk.ApplicationWindow):
                  fixed_layout: bool,
                  show_close_button: bool,
                  hide_mouse_pointer: bool):
-        Gtk.Window.__init__(self, title="PiJu")
+        Gtk.ApplicationWindow.__init__(self, title="PiJu")
         self.connect("destroy", self.on_quit)
         self.apiclient = apiclient
         if full_screen:
@@ -186,20 +189,20 @@ class MainWindow(Gtk.ApplicationWindow):
         self.hide_mouse_pointer = hide_mouse_pointer
         self.connect('realize', self.on_realized)
 
-    def on_next(self, *args):
+    def on_next(self, *_):
         self.apiclient.next()
 
-    def on_play_pause(self, *args):
+    def on_play_pause(self, *_):
         if self.play_pause_action:
             self.play_pause_action()
 
-    def on_previous(self, *args):
+    def on_previous(self, *_):
         self.apiclient.previous()
 
-    def on_quit(self, *args):
+    def on_quit(self, *_):
         Gtk.main_quit()
 
-    def on_realized(self, *args):
+    def on_realized(self, *_):
         if self.hide_mouse_pointer:
             self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
         logging.debug("Main window realized: allocated size %ux%u",
@@ -231,6 +234,11 @@ class MainWindow(Gtk.ApplicationWindow):
             self.track_name_label.set_label(now_playing.track_name or 'Unknown track')
             self.artist_label.show()
             self.track_name_label.show()
+        elif now_playing.stream_name:
+            self.no_track_label.hide()
+            self.track_name_label.set_label(now_playing.stream_name)
+            self.track_name_label.show()
+            self.artist_label.hide()
         else:
             self.artist_label.hide()
             self.track_name_label.hide()
