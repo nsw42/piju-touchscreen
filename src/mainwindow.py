@@ -96,6 +96,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.play_pause_button.set_halign(Gtk.Align.CENTER)
         self.next_button.set_halign(Gtk.Align.END)
         for button in (self.prev_button, self.play_pause_button, self.next_button):
+            button.props.focus_on_click = False
             button.set_valign(Gtk.Align.CENTER)
 
         self.play_pause_button.connect('clicked', self.on_play_pause)
@@ -281,17 +282,21 @@ class MainWindow(Gtk.ApplicationWindow):
         self.current_image_uri = now_playing.image_uri
 
     def show_now_playing_play_pause_icon(self, now_playing: NowPlaying):
-        if now_playing.current_state == 'playing':
-            self.play_pause_button.set_image(self.pause_icon)
-            self.play_pause_action = self.apiclient.pause
-        else:
+        if now_playing.current_state == 'stopped':
+            self.play_pause_button.set_sensitive(False)
             self.play_pause_button.set_image(self.play_icon)
-            self.play_pause_action = self.apiclient.resume
+        else:
+            self.play_pause_button.set_sensitive(True)
+            if now_playing.current_state == 'playing':
+                self.play_pause_button.set_image(self.pause_icon)
+                self.play_pause_action = self.apiclient.pause
+            elif now_playing.current_state == 'paused':
+                self.play_pause_button.set_image(self.play_icon)
+                self.play_pause_action = self.apiclient.resume
 
     def show_now_playing_prev_next(self, now_playing: NowPlaying):
         have_track_number = bool(now_playing.track_number)
         self.prev_button.set_sensitive(have_track_number and now_playing.track_number > 1)
-        self.play_pause_button.set_sensitive(have_track_number)
         self.next_button.set_sensitive(have_track_number
                                        and (now_playing.album_tracks is not None)
                                        and (now_playing.track_number < now_playing.album_tracks))
