@@ -2,6 +2,7 @@ import logging
 import os.path
 
 import gi
+import requests
 
 from nowplaying import NowPlaying
 gi.require_version('Gtk', '3.0')
@@ -13,6 +14,8 @@ from gi.repository import Gdk  # noqa: E402 # need to call require_version befor
 from gi.repository import GdkPixbuf  # noqa: E402 # need to call require_version before we can call this
 gi.require_version('Pango', '1.0')
 from gi.repository import Pango  # noqa: E402 # need to call require_version before we can call this
+gi.require_version('Rsvg', '2.0')
+from gi.repository import Rsvg  # noqa: E402 # need to call require_version before we can call this
 
 from apiclient import ApiClient  # noqa: E402 # libraries before local imports
 # pylint: enable=wrong-import-position,wrong-import-order
@@ -252,27 +255,38 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         if not now_playing.image:
             return False
-        loader = GdkPixbuf.PixbufLoader()
-        try:
-            loader.write(now_playing.image)
-        except gi.repository.GLib.GError as exc:
-            logging.error(f"Error loading image into pixbuf: {exc}")
-            return False
-        pixbuf = loader.get_pixbuf()
-        loader.close()
-        if (now_playing.image_width > MAX_IMAGE_SIZE) or (now_playing.image_height > MAX_IMAGE_SIZE):
-            if now_playing.image_width > now_playing.image_height:
+        if now_playing.image_uri.endswith('.svg'):
+            logging.debug(f"Loading SVG from {now_playing.image_uri}")
+            response = requests.get(now_playing.image_uri)
+            if not response.ok:
+                return False
+            rsvg = Rsvg.Handle.new_from_data(response.content)
+            pixbuf = rsvg.get_pixbuf()
+        else:
+            loader = GdkPixbuf.PixbufLoader()
+            try:
+                loader.write(now_playing.image)
+            except gi.repository.GLib.GError as exc:
+                logging.error(f"Error loading image into pixbuf: {exc}")
+                return False
+            pixbuf = loader.get_pixbuf()
+            loader.close()
+        width = pixbuf.get_width()
+        height = pixbuf.get_height()
+        if (width > MAX_IMAGE_SIZE) or (height > MAX_IMAGE_SIZE):
+            if width > height:
                 dest_width = MAX_IMAGE_SIZE
-                dest_height = now_playing.image_height * dest_width / now_playing.image_width
+                dest_height = height * dest_width / width
             else:
                 dest_height = MAX_IMAGE_SIZE
-                dest_width = now_playing.image_width * dest_height / now_playing.image_height
+                dest_width = width * dest_height / height
             pixbuf = pixbuf.scale_simple(dest_width, dest_height, GdkPixbuf.InterpType.BILINEAR)
         self.artwork.set_from_pixbuf(pixbuf)
         self.artwork.show()
         return True
 
     def show_now_playing_image(self, now_playing: NowPlaying):
+        logging.debug(f"show_now_playing_image: {now_playing.image_uri}")
         if now_playing.image_uri == self.current_image_uri:
             # Nothing to do
             return

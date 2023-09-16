@@ -3,7 +3,7 @@ import logging
 
 import requests
 
-CurrentStatus = namedtuple('CurrentStatus', 'status, current_track, current_stream, '
+CurrentStatus = namedtuple('CurrentStatus', 'status, current_track, current_stream, current_artwork, '
                                             'volume, scanning, '
                                             'current_track_index, maximum_track_index')
 # status: str, one of "stopped", "playing", "paused", or None for error
@@ -16,7 +16,7 @@ ArtworkInfo = namedtuple('ArtworkInfo', 'width height imageuri')
 # height: int (or None if there's no artwork)
 # imageuri: str (or None if there's no artwork)
 
-CURRENT_STATUS_ERROR = CurrentStatus(status=None, current_track={}, current_stream=None,
+CURRENT_STATUS_ERROR = CurrentStatus(status=None, current_track={}, current_stream=None, current_artwork=None,
                                      volume=None, scanning=None,
                                      current_track_index=None, maximum_track_index=None)
 
@@ -61,6 +61,8 @@ class ApiClient:
 
         current_stream = response_body.get('CurrentStream')
 
+        current_artwork = response_body.get('CurrentArtwork')
+
         current_volume = 50  # TODO
 
         scanning = (response_body.get('WorkerStatus', 'Idle').lower() != 'idle')
@@ -68,7 +70,7 @@ class ApiClient:
         current_track_index = response_body.get('CurrentTrackIndex', None)
         maximum_track_index = response_body.get('MaximumTrackIndex', None)
 
-        return CurrentStatus(status, current_track, current_stream,
+        return CurrentStatus(status, current_track, current_stream, current_artwork,
                              current_volume, scanning,
                              current_track_index, maximum_track_index)
 
@@ -105,8 +107,10 @@ class ApiClient:
         if artwork_uri_path is None:
             return None
 
-        assert artwork_uri_path.startswith('/')
-        uri = self.base_uri + artwork_uri_path
+        if artwork_uri_path.startswith('/'):
+            uri = self.base_uri + artwork_uri_path
+        else:
+            uri = artwork_uri_path
         try:
             response = requests.get(uri)
         except requests.exceptions.ConnectionError:
