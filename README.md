@@ -47,7 +47,7 @@ As root:
 * Install dependencies. As root:
 
     ```sh
-    apk add py3-gobject3
+    apk add py3-gobject3 librsvg
     ```
 
 * Download (or git clone) <https://github.com/nsw42/piju-touchscreen>
