@@ -12,8 +12,6 @@ class NowPlaying:
         self.current_volume = None
         self.image_uri = None
         self.image = None
-        self.image_width = None
-        self.image_height = None
         self.scanning_active = None
 
     def __str__(self):
@@ -28,6 +26,4 @@ class NowPlaying:
                 f'{self.current_state}, '
                 f'{self.current_volume}, '
                 f'{self.image_uri}, '
-                f'{self.image_width}, '
-                f'{self.image_height}, '
                 f'{self.scanning_active})')

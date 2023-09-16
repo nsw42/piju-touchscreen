@@ -86,7 +86,7 @@ def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
     status = apiclient.get_current_state()
 
     current_track = status.current_track
-    artwork_cache.update(apiclient, current_track.get('artworkinfo'))
+    artwork_cache.update(apiclient, status.current_artwork)
 
     now_playing.refresh_countdown = 5
     now_playing.is_track = bool(current_track)
@@ -99,8 +99,6 @@ def get_current_track(apiclient: ApiClient, now_playing: NowPlaying):
     now_playing.current_volume = status.volume
     now_playing.image_uri = artwork_cache.current_image_uri
     now_playing.image = artwork_cache.current_image
-    now_playing.image_width = artwork_cache.current_image_width
-    now_playing.image_height = artwork_cache.current_image_height
 
     now_playing.scanning_active = status.scanning
 
