@@ -5,7 +5,7 @@ import gi
 import requests
 
 from nowplaying import NowPlaying
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 # pylint: disable=wrong-import-position,wrong-import-order
 # (need to call require_version before we can import the other gi libraries, and we want
 # third-party libraries before local libraries)
@@ -26,7 +26,7 @@ SCREEN_HEIGHT = 480
 MAX_IMAGE_SIZE = 300
 
 
-def load_local_image(icon_name, icon_size):
+def load_local_image(icon_name, icon_size) -> Gtk.Image:
     leafname = icon_name
     if icon_size:
         leafname += f'_{icon_size}'
@@ -46,17 +46,16 @@ def set_font(label, weight, font_size, colour):
     label.modify_fg(Gtk.StateType.NORMAL, colour)
 
 
-def mk_label(justification=Gtk.Justification.LEFT,
+def mk_label(justification=Gtk.Justification.CENTER,
              large=True):
     label = Gtk.Label()
     label.set_hexpand(True)
     label.set_vexpand(True)
-    label.set_line_wrap(True)
-    label.set_justify(justification)
-    set_font(label,
-             Pango.Weight.BOLD if large else Pango.Weight.NORMAL,
-             32 if large else 24,
-             Gdk.Color.from_floats(0.0, 0.0, 0.0) if large else Gdk.Color.from_floats(0.3, 0.3, 0.3))
+    label.set_wrap(True)
+    label.set_xalign(0.0 if justification == Gtk.Justification.LEFT else
+                     0.5 if justification == Gtk.Justification.CENTER else
+                     1.0)
+    label.set_css_classes(['piju_large' if large else 'piju_normal'])
     return label
 
 
@@ -66,19 +65,28 @@ class MainWindow(Gtk.ApplicationWindow):
     """
 
     def __init__(self,
+                 application: Gtk.Application,
                  apiclient: ApiClient,
                  full_screen: bool,
                  fixed_layout: bool,
                  show_close_button: bool,
                  hide_mouse_pointer: bool):
-        Gtk.ApplicationWindow.__init__(self, title="PiJu")
+        Gtk.ApplicationWindow.__init__(self, application=application, title="PiJu")
+
         self.connect("destroy", self.on_quit)
         self.apiclient = apiclient
         if full_screen:
             self.fullscreen()
         else:
             self.set_size_request(SCREEN_WIDTH, SCREEN_HEIGHT)
-
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_string('''
+            .piju_large { font-weight: bold; font-size: 32px; color: rgb(0,0,0); }
+            .piju_normal { font-weight: normal; font-size: 24px; color: rgb(77, 77, 77); }
+        ''')
+        Gtk.StyleContext().add_provider_for_display(Gdk.Display.get_default(),
+                                                    css_provider,
+                                                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         self.play_icon = None
         self.pause_icon = None
 
@@ -101,6 +109,7 @@ class MainWindow(Gtk.ApplicationWindow):
         for button in (self.prev_button, self.play_pause_button, self.next_button):
             button.props.focus_on_click = False
             button.set_valign(Gtk.Align.CENTER)
+            button.set_size_request(100, 100)
 
         self.play_pause_button.connect('clicked', self.on_play_pause)
 
@@ -110,7 +119,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         close_icon = load_local_image('window-close-solid', 0)
         close = Gtk.Button()
-        close.set_image(close_icon)
+        close.set_child(close_icon)
         close.connect('clicked', self.on_quit)
 
         # image          track
@@ -154,7 +163,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
             fixed_container.put(self.scanning_indicator_icon, SCREEN_WIDTH - 20, 4)
 
-            self.add(fixed_container)
+            self.set_child(fixed_container)
         else:
             self.no_track_label = self.artist_label
 
@@ -179,16 +188,16 @@ class MainWindow(Gtk.ApplicationWindow):
 
             if show_close_button:
                 overlay = Gtk.Overlay()
-                overlay.add(child_container)
+                overlay.set_child(child_container)
 
                 top_right = Gtk.Alignment.new(1, 0, 0, 0)
-                top_right.add(close)
+                top_right.set_child(close)
                 overlay.add_overlay(top_right)
-                overlay.set_overlay_pass_through(top_right, True)
+                overlay.set_can_target(False)  # clicks go to the close
 
-                self.add(overlay)
+                overlay.set_parent(self)
             else:
-                self.add(child_container)
+                self.set_child(child_container)
 
         self.hide_mouse_pointer = hide_mouse_pointer
         self.connect('realize', self.on_realized)
@@ -208,16 +217,19 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def on_realized(self, *_):
         if self.hide_mouse_pointer:
-            self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
+            # self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
+            pass
         logging.debug("Main window realized: allocated size %ux%u",
                       self.get_allocated_width(), self.get_allocated_height())
         icon_size = 200 if (self.get_allocated_width() > 1000) else 100
         self.pause_icon = load_local_image('pause-solid', icon_size)
+        self.pause_icon.set_parent(self.play_pause_button)
         self.play_icon = load_local_image('play-solid', icon_size)
+        self.play_icon.set_parent(self.play_pause_button)
         prev_icon = load_local_image('backward-solid', icon_size)
-        self.prev_button.set_image(prev_icon)
+        prev_icon.set_parent(self.prev_button)
         next_icon = load_local_image('forward-solid', icon_size)
-        self.next_button.set_image(next_icon)
+        next_icon.set_parent(self.next_button)
 
     def show_connection_error(self):
         self.artist_label.hide()
@@ -226,7 +238,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.no_track_label.show()
         self.no_track_label.set_label("Connection error")
         self.scanning_indicator_icon.hide()
-        self.play_pause_button.set_image(self.play_icon)
+        self.play_icon.set_parent(self.play_pause_button)
         self.prev_button.set_sensitive(False)
         self.play_pause_button.set_sensitive(False)
         self.next_button.set_sensitive(False)
@@ -269,8 +281,10 @@ class MainWindow(Gtk.ApplicationWindow):
             except gi.repository.GLib.GError as exc:
                 logging.error(f"Error loading image into pixbuf: {exc}")
                 return False
+            if not loader.close():
+                logging.error("Image data could not be parsed")
+                return False
             pixbuf = loader.get_pixbuf()
-            loader.close()
         width = pixbuf.get_width()
         height = pixbuf.get_height()
         if (width > MAX_IMAGE_SIZE) or (height > MAX_IMAGE_SIZE):
@@ -297,16 +311,25 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def show_now_playing_play_pause_icon(self, now_playing: NowPlaying):
         if now_playing.current_state == 'stopped':
-            self.play_pause_button.set_sensitive(False)
-            self.play_pause_button.set_image(self.play_icon)
+            sensitive, icon, action = False, self.play_icon, None
         else:
-            self.play_pause_button.set_sensitive(True)
+            sensitive = True
             if now_playing.current_state == 'playing':
-                self.play_pause_button.set_image(self.pause_icon)
-                self.play_pause_action = self.apiclient.pause
+                sensitive, icon, action = True, self.pause_icon, self.apiclient.pause
             elif now_playing.current_state == 'paused':
-                self.play_pause_button.set_image(self.play_icon)
-                self.play_pause_action = self.apiclient.resume
+                sensitive, icon, action = True, self.play_icon, self.apiclient.resume
+            else:
+                logging.debug("Unknown state in show_now_playing_play_pause_icon: %s", now_playing.current_state)
+                sensitive, icon, action = True, self.play_icon, self.apiclient.resume
+        logging.debug("show_now_playing_play_pause_icon: %s, %s, %s", sensitive, icon, action)
+        if not icon:
+            # we're not yet fully initialised
+            return
+        icon.set_visible(True)
+        other_icon = self.play_icon if (icon == self.pause_icon) else self.pause_icon
+        other_icon.set_visible(False)
+        self.play_pause_button.set_sensitive(sensitive)
+        self.play_pause_action = action
 
     def show_now_playing_prev_next(self, now_playing: NowPlaying):
         have_track_number = bool(now_playing.track_number)

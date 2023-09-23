@@ -6,7 +6,7 @@ import time
 from urllib.parse import urlparse, urlunparse
 
 import gi
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 # pylint: disable=wrong-import-position,wrong-import-order
 # (need to call require_version before we can import the other gi libraries, and we want
 # third-party libraries before local libraries)
@@ -118,20 +118,26 @@ def update_track_display(apiclient: ApiClient, window: MainWindow, screenmgr: sc
         time.sleep(1)
 
 
-def main():
+def on_activate(app):
     args = parse_args()
-    logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR,
-                        filename=args.logfile)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR, filename=args.logfile)
+
     apiclient = ApiClient(args.host)
-    window = MainWindow(apiclient, args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
-    window.show_all()
+    window = MainWindow(app, apiclient,
+                        args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
+    window.present()
     screenmgr = screenblankmgr.ScreenBlankMgr(screenblankmgr.profiles[args.screenblanker_profile])
 
     thread = threading.Thread(target=update_track_display, args=(apiclient, window, screenmgr), daemon=True)
     thread.start()
 
-    Gtk.main()
+
+def main():
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    app = Gtk.Application()
+    app.connect('activate', on_activate)
+    app.run(None)
 
 
 if __name__ == '__main__':
