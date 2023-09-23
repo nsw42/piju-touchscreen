@@ -46,18 +46,16 @@ def set_font(label, weight, font_size, colour):
     label.modify_fg(Gtk.StateType.NORMAL, colour)
 
 
-def mk_label(justification=Gtk.Justification.LEFT,
+def mk_label(justification=Gtk.Justification.CENTER,
              large=True):
     label = Gtk.Label()
     label.set_hexpand(True)
     label.set_vexpand(True)
-    # label.set_line_wrap(True)  # TODO
-    label.set_justify(justification)
-    # TODO::
-    # set_font(label,
-    #          Pango.Weight.BOLD if large else Pango.Weight.NORMAL,
-    #          32 if large else 24,
-    #          Gdk.Color.from_floats(0.0, 0.0, 0.0) if large else Gdk.Color.from_floats(0.3, 0.3, 0.3))
+    label.set_wrap(True)
+    label.set_xalign(0.0 if justification == Gtk.Justification.LEFT else
+                     0.5 if justification == Gtk.Justification.CENTER else
+                     1.0)
+    label.set_css_classes(['piju_large' if large else 'piju_normal'])
     return label
 
 
@@ -74,13 +72,21 @@ class MainWindow(Gtk.ApplicationWindow):
                  show_close_button: bool,
                  hide_mouse_pointer: bool):
         Gtk.ApplicationWindow.__init__(self, application=application, title="PiJu")
+
         self.connect("destroy", self.on_quit)
         self.apiclient = apiclient
         if full_screen:
             self.fullscreen()
         else:
             self.set_size_request(SCREEN_WIDTH, SCREEN_HEIGHT)
-
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_string('''
+            .piju_large { font-weight: bold; font-size: 32px; color: rgb(0,0,0); }
+            .piju_normal { font-weight: normal; font-size: 24px; color: rgb(77, 77, 77); }
+        ''')
+        Gtk.StyleContext().add_provider_for_display(Gdk.Display.get_default(),
+                                                    css_provider,
+                                                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         self.play_icon = None
         self.pause_icon = None
 
@@ -103,6 +109,7 @@ class MainWindow(Gtk.ApplicationWindow):
         for button in (self.prev_button, self.play_pause_button, self.next_button):
             button.props.focus_on_click = False
             button.set_valign(Gtk.Align.CENTER)
+            button.set_size_request(100, 100)
 
         self.play_pause_button.connect('clicked', self.on_play_pause)
 
