@@ -80,10 +80,7 @@ class MainWindow(Gtk.ApplicationWindow):
         else:
             self.set_size_request(SCREEN_WIDTH, SCREEN_HEIGHT)
         css_provider = Gtk.CssProvider()
-        css_provider.load_from_string('''
-            .piju_large { font-weight: bold; font-size: 32px; color: rgb(0,0,0); }
-            .piju_normal { font-weight: normal; font-size: 24px; color: rgb(77, 77, 77); }
-        ''')
+        css_provider.load_from_path(os.path.join(os.path.dirname(__file__), 'mainwindow.css'))
         Gtk.StyleContext().add_provider_for_display(Gdk.Display.get_default(),
                                                     css_provider,
                                                     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
