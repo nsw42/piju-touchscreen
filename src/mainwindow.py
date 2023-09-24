@@ -214,8 +214,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def on_realized(self, *_):
         if self.hide_mouse_pointer:
-            # self.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
-            pass
+            self.set_cursor(Gdk.Cursor.new_from_name('none', None))
         logging.debug("Main window realized: allocated size %ux%u",
                       self.get_allocated_width(), self.get_allocated_height())
         icon_size = 200 if (self.get_allocated_width() > 1000) else 100
