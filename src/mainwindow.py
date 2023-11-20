@@ -266,7 +266,10 @@ class MainWindow(Gtk.ApplicationWindow):
             return False
         if now_playing.image_uri.endswith('.svg'):
             logging.debug(f"Loading SVG from {now_playing.image_uri}")
-            response = requests.get(now_playing.image_uri)
+            try:
+                response = requests.get(now_playing.image_uri, timeout=3)
+            except requests.exceptions.RequestException:
+                return False
             if not response.ok:
                 return False
             rsvg = Rsvg.Handle.new_from_data(response.content)

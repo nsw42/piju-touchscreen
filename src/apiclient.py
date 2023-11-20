@@ -20,6 +20,8 @@ CURRENT_STATUS_ERROR = CurrentStatus(status=None, current_track={}, current_stre
                                      volume=None, scanning=None,
                                      current_track_index=None, maximum_track_index=None)
 
+PIJU_SERVER_TIMEOUT = 1
+
 
 class ApiClient:
     def __init__(self, base_uri):
@@ -30,8 +32,8 @@ class ApiClient:
 
     def get_current_state(self) -> CurrentStatus:
         try:
-            response = requests.get(self.base_uri + '/')
-        except requests.exceptions.ConnectionError:
+            response = requests.get(self.base_uri + '/', timeout=PIJU_SERVER_TIMEOUT)
+        except requests.exceptions.RequestException:
             logging.error(f"Unable to connect to {self.base_uri}")
             self.connection_error = True
             return CURRENT_STATUS_ERROR
@@ -81,8 +83,8 @@ class ApiClient:
         assert info_uri_path.startswith('/')
         uri = self.base_uri + info_uri_path
         try:
-            response = requests.get(uri)
-        except requests.exceptions.ConnectionError:
+            response = requests.get(uri, timeout=PIJU_SERVER_TIMEOUT)
+        except requests.exceptions.RequestException:
             logging.error("Unable to connect to piju")
             self.connection_error = True
             return ArtworkInfo(None, None, None)
@@ -112,9 +114,9 @@ class ApiClient:
         else:
             uri = artwork_uri_path
         try:
-            response = requests.get(uri)
-        except requests.exceptions.ConnectionError:
-            logging.error("Unable to connect to piju")
+            response = requests.get(uri, timeout=PIJU_SERVER_TIMEOUT)
+        except requests.exceptions.RequestException:
+            logging.error("Unable to fetch artwork")
             self.connection_error = True
             return None
 
@@ -130,36 +132,52 @@ class ApiClient:
 
     def pause(self):
         uri = self.base_uri + '/player/pause'
-        response = requests.post(uri)
-        if not response.ok:
+        try:
+            response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
+            ok = response.ok
+        except requests.exceptions.RequestException:
+            ok = False
+        if not ok:
             logging.error("Failed to pause: status=%u, error=%s",
                           response.status_code,
                           response.text)
-        return response.ok
+        return ok
 
     def resume(self):
         uri = self.base_uri + '/player/resume'
-        response = requests.post(uri)
-        if not response.ok:
+        try:
+            response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
+            ok = response.ok
+        except requests.exceptions.RequestException:
+            ok = False
+        if not ok:
             logging.error("Failed to resume: status=%u, error=%s",
                           response.status_code,
                           response.text)
-        return response.ok
+        return ok
 
     def previous(self):
         uri = self.base_uri + '/player/previous'
-        response = requests.post(uri)
-        if not response.ok:
+        try:
+            response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
+            ok = response.ok
+        except requests.exceptions.RequestException:
+            ok = False
+        if not ok:
             logging.error("Failed to skip to previous track: status=%u, error=%s",
                           response.status_code,
                           response.text)
-        return response.ok
+        return ok
 
     def next(self):
         uri = self.base_uri + '/player/next'
-        response = requests.post(uri)
-        if not response.ok:
+        try:
+            response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
+            ok = response.ok
+        except requests.exceptions.RequestException:
+            ok = False
+        if not ok:
             logging.error("Failed to skip to next track: status=%u, error=%s",
                           response.status_code,
                           response.text)
-        return response.ok
+        return ok
