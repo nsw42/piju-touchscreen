@@ -321,7 +321,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def show_now_playing_image(self, now_playing: NowPlaying):
         logging.debug(f"show_now_playing_image: {now_playing.image_uri}")
         if now_playing.image_uri == self.current_image_uri:
-            # Nothing to do
+            # Ensure the artwork is visible; otherwise, there is nothing to do
+            if now_playing.image:
+                self.artwork.show()
             return
         logging.debug("Updating image display")
         if not self.show_now_playing_image_inner(now_playing):
