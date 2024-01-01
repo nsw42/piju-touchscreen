@@ -22,5 +22,11 @@ class ArtworkCache:
         logging.debug("Fetching new artwork: %s", new_image_uri)
         artwork = apiclient.get_artwork(new_image_uri)
 
+        if apiclient.connection_error:
+            # maybe it's a transient error - retry
+            self.current_image_uri = None
+            self.current_image = None
+            return
+
         self.current_image_uri = new_image_uri
         self.current_image = artwork
