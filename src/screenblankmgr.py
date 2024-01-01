@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from typing import Optional
 
 
 class PlayingState:
@@ -41,7 +42,7 @@ class ProfileBase:
     def _run_xset(self, s_arg):
         cmd = ['xset', 's', s_arg]
         logging.debug(cmd)
-        subprocess.run(cmd)
+        subprocess.run(cmd, check=False)  # Although it's not ideal if it fails, raising an Exception won't help
 
     def _blank_screen_now(self):
         self._run_xset('activate')
@@ -50,39 +51,32 @@ class ProfileBase:
 class ScreenBlankProfileNone(ProfileBase):
     def __init__(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
     def on_start_playing(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
     def on_stop_playing(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
     def on_playing_tick(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
     def on_stopped_delayed(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
 
 class ScreenBlankProfileBalanced(ProfileBase):
     def __init__(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
     def on_start_playing(self):
-        self._set_timeout(self, 300)
+        self._set_timeout(300)
 
     def on_stop_playing(self):
-        self._set_timeout(self, 30)
+        self._set_timeout(30)
 
     def on_playing_tick(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
     def on_stopped_delayed(self):
         self._blank_screen_now()
@@ -91,7 +85,6 @@ class ScreenBlankProfileBalanced(ProfileBase):
 class ScreenBlankProfileOnWhenPlaying(ProfileBase):
     def __init__(self):
         "Do nothing except prevent the NotImplementedError"
-        pass
 
     def on_start_playing(self):
         self._set_timeout(60 * 60)
@@ -110,15 +103,15 @@ class ScreenBlankProfileOnWhenPlaying(ProfileBase):
 
 class ScreenBlankMgr:
     def __init__(self, profile: ProfileBase):
-        self.state = None
+        self.state: Optional[int] = None
         self.profile = profile
         self.tick_countdown = 5
 
-    def set_state(self, new_state: str):
+    def set_state(self, new_state_str: str):
         """
         new_state in ('playing', 'paused', 'stopped')
         """
-        new_state = PlayingState.active if (new_state == 'playing') else PlayingState.inactive
+        new_state = PlayingState.active if (new_state_str == 'playing') else PlayingState.inactive
         if self.state == new_state:
             self.tick_countdown -= 1
             if self.state == PlayingState.active:
