@@ -72,6 +72,33 @@ def mk_label(justification=Gtk.Justification.CENTER,
     return label
 
 
+def pixbuf_from_svg_uri(image_uri: str) -> GdkPixbuf.Pixbuf:
+    logging.debug(f"Loading SVG from {image_uri}")
+    try:
+        response = requests.get(image_uri, timeout=3)
+    except requests.exceptions.RequestException:
+        return None
+    if not response.ok:
+        return None
+    rsvg = Rsvg.Handle.new_from_data(response.content)
+    pixbuf = rsvg.get_pixbuf()
+    return pixbuf
+
+
+def pixbuf_from_image_bytes(image: str) -> GdkPixbuf.Pixbuf:
+    loader = GdkPixbuf.PixbufLoader()
+    try:
+        loader.write(image)
+    except gi.repository.GLib.GError as exc:
+        logging.error(f"Error loading image into pixbuf: {exc}")
+        return None
+    if not loader.close():
+        logging.error("Image data could not be parsed")
+        return None
+    pixbuf = loader.get_pixbuf()
+    return pixbuf
+
+
 class MainWindow(Gtk.ApplicationWindow):
     """
     Main application window
@@ -284,26 +311,11 @@ class MainWindow(Gtk.ApplicationWindow):
         if not now_playing.image:
             return False
         if now_playing.image_uri.endswith('.svg'):
-            logging.debug(f"Loading SVG from {now_playing.image_uri}")
-            try:
-                response = requests.get(now_playing.image_uri, timeout=3)
-            except requests.exceptions.RequestException:
-                return False
-            if not response.ok:
-                return False
-            rsvg = Rsvg.Handle.new_from_data(response.content)
-            pixbuf = rsvg.get_pixbuf()
+            pixbuf = pixbuf_from_svg_uri(now_playing.image_uri)
         else:
-            loader = GdkPixbuf.PixbufLoader()
-            try:
-                loader.write(now_playing.image)
-            except gi.repository.GLib.GError as exc:
-                logging.error(f"Error loading image into pixbuf: {exc}")
-                return False
-            if not loader.close():
-                logging.error("Image data could not be parsed")
-                return False
-            pixbuf = loader.get_pixbuf()
+            pixbuf = pixbuf_from_image_bytes(now_playing.image)
+        if not pixbuf:
+            return False
         width = pixbuf.get_width()
         height = pixbuf.get_height()
         if (width > MAX_IMAGE_SIZE) or (height > MAX_IMAGE_SIZE):
