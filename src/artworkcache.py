@@ -13,20 +13,20 @@ class ArtworkCache:
             # nothing to do
             return
 
-        if new_image_uri is None:
+        if artwork := self.update_inner(apiclient, new_image_uri):
+            self.current_image_uri = new_image_uri
+            self.current_image = artwork
+        else:
             self.current_image_uri = None
             self.current_image = None
-            return
+
+    def update_inner(self, apiclient: ApiClient, new_image_uri: str):
+        """
+        Returns the artwork bytes or None if there is None
+        """
+        if new_image_uri is None:
+            return None
 
         # if we get here, we need to update our cache
         logging.debug("Fetching new artwork: %s", new_image_uri)
-        artwork = apiclient.get_artwork(new_image_uri)
-
-        if apiclient.connection_error:
-            # maybe it's a transient error - retry
-            self.current_image_uri = None
-            self.current_image = None
-            return
-
-        self.current_image_uri = new_image_uri
-        self.current_image = artwork
+        return apiclient.get_artwork(new_image_uri)  # returns artwork bytes or None
