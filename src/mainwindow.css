@@ -1,11 +1,49 @@
-.piju_large {
+.piju-light-large-label {
   font-weight: bold;
   font-size: 32px;
   color: rgb(0,0,0);
 }
 
-.piju_normal {
+.piju-light-normal-label {
   font-weight: normal;
   font-size: 24px;
   color: rgb(77, 77, 77);
+}
+
+/* Styles for dark mode */
+
+.piju-dark-large-label {
+  font-weight: bold;
+  font-size: 32px;
+  color: rgb(200, 200, 200);
+}
+
+.piju-dark-normal-label {
+  font-weight: normal;
+  font-size: 24px;
+  color: rgb(170, 170, 170);
+}
+
+.piju-dark-background {
+  background-color: #272b30;
+}
+
+.piju-dark-button {
+  background: #3a3f44;  /* --bs-btn-bg from bootswatch/slate */
+  border-color: #000;
+}
+
+.piju-dark-button:hover {
+  background-color: #31363a;  /* --bs-btn-hover-bg from bootswatch/slate */
+  filter: brightness(80%);
+}
+
+.piju-dark-button:disabled {
+  background-color: #787a7c;  /* bootswatch/slate uses #3a3f44, but that's insufficiently distinguishable on the touchscreen */
+  filter: brightness(50%);
+}
+
+.piju-dark-button:active {
+  background-color: #2e3236;  /* --bs-btn-active-bg from bootswatch/slate */
+  filter: brightness(50%);
 }

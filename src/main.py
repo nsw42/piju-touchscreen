@@ -51,6 +51,10 @@ def parse_args():
                              "Can include :portnumber if required. Port defaults to 5000.")
     mainwindowgroup = parser.add_argument_group('Main Window options',
                                                 description='Options related to the behaviour of the main window')
+    mainwindowgroup.add_argument('-d', '--dark-mode', action='store_true', dest='dark_mode',
+                                 help="Set the screen to dark mode")
+    mainwindowgroup.add_argument('-l', '--light-mode', action='store_false', dest='dark_mode',
+                                 help="Set the screen to light mode")
     mainwindowgroup.add_argument('--full-screen', action='store_true', dest='full_screen',
                                  help="Go full-screen (default)")
     mainwindowgroup.add_argument('--no-full-screen', action='store_false', dest='full_screen',
@@ -72,6 +76,7 @@ def parse_args():
     parser.set_defaults(debug=False,
                         logfile=None,
                         host='localhost',
+                        dark_mode=False,
                         full_screen=True,
                         fixed_layout=True,
                         show_close_button=True,
@@ -124,7 +129,8 @@ def on_activate(app):
 
     apiclient = ApiClient(args.host)
     window = MainWindow(app, apiclient,
-                        args.full_screen, args.fixed_layout, args.show_close_button, args.hide_mouse_pointer)
+                        args.dark_mode, args.full_screen, args.fixed_layout, args.show_close_button,
+                        args.hide_mouse_pointer)
     window.present()
     screenmgr = screenblankmgr.ScreenBlankMgr(screenblankmgr.profiles[args.screenblanker_profile])
 

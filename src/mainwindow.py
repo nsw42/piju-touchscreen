@@ -26,13 +26,22 @@ SCREEN_HEIGHT = 480
 MAX_IMAGE_SIZE = 300
 
 
-def load_local_image(icon_name, icon_size) -> Gtk.Image:
+def load_local_image(icon_name, dark_mode, icon_size) -> Gtk.Image:
+    '''
+    icon_name is the base name of the image to load
+    dark_mode is True ("-dark"), False ("-light") or None ("")
+    icon_size is an int or None
+    '''
     leafname = icon_name
+    if dark_mode is True:
+        leafname += '-dark'
+    elif dark_mode is False:
+        leafname += '-light'
     if icon_size:
         leafname += f'_{icon_size}'
     leafname += '.png'
     icon_filename = os.path.join(os.path.dirname(__file__), os.path.pardir, 'icons', leafname)
-    assert os.path.exists(icon_filename)
+    assert os.path.exists(icon_filename), f'{icon_filename} not found'
     return Gtk.Image.new_from_file(icon_filename)
 
 
@@ -47,7 +56,8 @@ def set_font(label, weight, font_size, colour):
 
 
 def mk_label(justification=Gtk.Justification.CENTER,
-             large=True):
+             large=True,
+             dark_mode=False):
     label = Gtk.Label()
     label.set_hexpand(True)
     label.set_vexpand(True)
@@ -55,7 +65,10 @@ def mk_label(justification=Gtk.Justification.CENTER,
     label.set_xalign(0.0 if justification == Gtk.Justification.LEFT else
                      0.5 if justification == Gtk.Justification.CENTER else
                      1.0)
-    label.set_css_classes(['piju_large' if large else 'piju_normal'])
+    mode = 'dark' if dark_mode else 'light'
+    size = 'large' if large else 'normal'
+    clss = f'piju-{mode}-{size}-label'
+    label.add_css_class(clss)
     return label
 
 
@@ -67,11 +80,16 @@ class MainWindow(Gtk.ApplicationWindow):
     def __init__(self,
                  application: Gtk.Application,
                  apiclient: ApiClient,
+                 dark_mode: bool,
                  full_screen: bool,
                  fixed_layout: bool,
                  show_close_button: bool,
                  hide_mouse_pointer: bool):
         Gtk.ApplicationWindow.__init__(self, application=application, title="PiJu")
+
+        if dark_mode:
+            self.add_css_class('piju-dark-background')
+        self.dark_mode = dark_mode
 
         self.connect("destroy", self.on_quit)
         self.apiclient = apiclient
@@ -93,11 +111,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.artwork.set_hexpand(False)
         self.artwork.set_vexpand(False)
         self.artwork.set_size_request(MAX_IMAGE_SIZE, MAX_IMAGE_SIZE)
-        self.track_name_label = mk_label(large=True)
-        self.artist_label = mk_label(large=False)
+        self.track_name_label = mk_label(large=True, dark_mode=dark_mode)
+        self.artist_label = mk_label(large=False, dark_mode=dark_mode)
         self.prev_button = Gtk.Button()
         self.prev_button.connect('clicked', self.on_previous)
         self.play_pause_button = Gtk.Button()
+        self.play_pause_button.connect('clicked', self.on_play_pause)
         self.next_button = Gtk.Button()
         self.next_button.connect('clicked', self.on_next)
         self.prev_button.set_halign(Gtk.Align.START)
@@ -107,14 +126,14 @@ class MainWindow(Gtk.ApplicationWindow):
             button.props.focus_on_click = False
             button.set_valign(Gtk.Align.CENTER)
             button.set_size_request(100, 100)
-
-        self.play_pause_button.connect('clicked', self.on_play_pause)
+            if dark_mode:
+                button.add_css_class('piju-dark-button')
 
         self.play_pause_action = None
 
-        self.scanning_indicator_icon = load_local_image('circle-solid', 16)
+        self.scanning_indicator_icon = load_local_image('circle', None, 16)
 
-        close_icon = load_local_image('window-close-solid', 0)
+        close_icon = load_local_image('window-close', None, 0)
         close = Gtk.Button()
         close.set_child(close_icon)
         close.connect('clicked', self.on_quit)
@@ -124,7 +143,7 @@ class MainWindow(Gtk.ApplicationWindow):
         #  prev  play/pause   next
 
         if fixed_layout:
-            self.no_track_label = mk_label(justification=Gtk.Justification.CENTER, large=False)
+            self.no_track_label = mk_label(justification=Gtk.Justification.CENTER, large=False, dark_mode=dark_mode)
 
             fixed_container = Gtk.Fixed.new()
             x_padding = 10
@@ -218,13 +237,13 @@ class MainWindow(Gtk.ApplicationWindow):
         logging.debug("Main window realized: allocated size %ux%u",
                       self.get_allocated_width(), self.get_allocated_height())
         icon_size = 200 if (self.get_allocated_width() > 1000) else 100
-        self.pause_icon = load_local_image('pause-solid', icon_size)
+        self.pause_icon = load_local_image('pause', self.dark_mode, icon_size)
         self.pause_icon.set_parent(self.play_pause_button)
-        self.play_icon = load_local_image('play-solid', icon_size)
+        self.play_icon = load_local_image('play', self.dark_mode, icon_size)
         self.play_icon.set_parent(self.play_pause_button)
-        prev_icon = load_local_image('backward-solid', icon_size)
+        prev_icon = load_local_image('backward', self.dark_mode, icon_size)
         prev_icon.set_parent(self.prev_button)
-        next_icon = load_local_image('forward-solid', icon_size)
+        next_icon = load_local_image('forward', self.dark_mode, icon_size)
         next_icon.set_parent(self.next_button)
 
     def show_connection_error(self):
