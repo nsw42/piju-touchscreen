@@ -130,54 +130,25 @@ class ApiClient:
 
         return response.content
 
-    def pause(self):
-        uri = self.base_uri + '/player/pause'
+    def _simple_operation(self, uri_suffix, operation_desc):
+        uri = self.base_uri + uri_suffix
         try:
             response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
-            ok = response.ok
-        except requests.exceptions.RequestException:
-            ok = False
-        if not ok:
-            logging.error("Failed to pause: status=%u, error=%s",
-                          response.status_code,
-                          response.text)
-        return ok
+        except requests.exceptions.RequestException as exc:
+            logging.error(f"Failed to {operation_desc}: Exception {exc}")
+            return False
+        if not response.ok:
+            logging.error(f"Failed to {operation_desc}: status={response.status_code}, error={response.text}")
+        return response.ok
+
+    def pause(self):
+        return self._simple_operation('/player/pause', 'pause')
 
     def resume(self):
-        uri = self.base_uri + '/player/resume'
-        try:
-            response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
-            ok = response.ok
-        except requests.exceptions.RequestException:
-            ok = False
-        if not ok:
-            logging.error("Failed to resume: status=%u, error=%s",
-                          response.status_code,
-                          response.text)
-        return ok
+        return self._simple_operation('/player/resume', 'resume')
 
     def previous(self):
-        uri = self.base_uri + '/player/previous'
-        try:
-            response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
-            ok = response.ok
-        except requests.exceptions.RequestException:
-            ok = False
-        if not ok:
-            logging.error("Failed to skip to previous track: status=%u, error=%s",
-                          response.status_code,
-                          response.text)
-        return ok
+        return self._simple_operation('/player/previous', 'skip to previous track')
 
     def next(self):
-        uri = self.base_uri + '/player/next'
-        try:
-            response = requests.post(uri, timeout=PIJU_SERVER_TIMEOUT)
-            ok = response.ok
-        except requests.exceptions.RequestException:
-            ok = False
-        if not ok:
-            logging.error("Failed to skip to next track: status=%u, error=%s",
-                          response.status_code,
-                          response.text)
-        return ok
+        return self._simple_operation('/player/next', 'skip to next track')
