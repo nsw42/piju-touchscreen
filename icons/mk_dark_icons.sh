@@ -3,5 +3,6 @@
 
 for inf in *light*; do
   outf=${inf/light/dark}
-  convert $inf -channel RGB -negate +level 10% $outf
+  # aiming for about RGB 200,200,200 for the body of the icon
+  convert $inf -channel RGB -negate +level 20% $outf
 done
